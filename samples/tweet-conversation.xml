@@ -1,0 +1,411 @@
+
+<li class="conversation-root conversation-tweet-item first-navigable-stream-item conversation-first-visible-tweet">
+  
+  <span class="u-hiddenVisually">Neue Unterhaltung</span>
+  
+  <div class="tweet js-stream-tweet js-actionable-tweet js-profile-popup-actionable dismissible-content has-cards cards-forward conversation-root conversation-tweet favorited retweeted focus" data-tweet-id="914029555052138496" data-item-id="914029555052138496" data-permalink-path="/patriarchator/status/914029555052138496" data-conversation-id="914029555052138496" data-tweet-nonce="914029555052138496-601c1937-d95e-4afd-a62f-cdfc895fa3a2" data-tweet-stat-initialized="true" data-screen-name="patriarchator" data-name="Patriarchator" data-user-id="4002508960" data-you-follow="true" data-follows-you="false" data-you-block="false" data-reply-to-users-json="[{&quot;id_str&quot;:&quot;4002508960&quot;,&quot;screen_name&quot;:&quot;patriarchator&quot;,&quot;name&quot;:&quot;Patriarchator&quot;,&quot;emojified_name&quot;:{&quot;text&quot;:&quot;Patriarchator&quot;,&quot;emojified_text_as_html&quot;:&quot;Patriarchator&quot;}}]" data-disclosure-type="" data-card2-type="summary_large_image" data-has-cards="true">
+
+    <div class="context"></div>
+
+    <div class="content">
+
+      <div class="stream-item-header">
+        <a class="account-group js-account-group js-action-profile js-user-profile-link js-nav" href="/patriarchator" data-user-id="4002508960">
+          <img class="avatar js-action-profile-avatar" 
+            src="https://pbs.twimg.com/profile_images/865704515378589696/2hmun_YW_bigger.jpg" alt="">
+            
+          <span class="FullNameGroup">
+              <strong class="fullname show-popup-with-id " data-aria-label-part="">Patriarchator</strong><span>‏</span>
+              <span class="UserBadges"></span><span class="UserNameBreak">&nbsp;</span></span><span class="username u-dir" dir="ltr" data-aria-label-part="">@<b>patriarchator</b></span></a>
+
+              <small class="time">
+                <a href="/patriarchator/status/914029555052138496" class="tweet-timestamp js-permalink js-nav js-tooltip" title="09:30 - 30. Sep. 2017" data-conversation-id="914029555052138496"><span class="_timestamp js-short-timestamp js-relative-timestamp" data-time="1506756602" data-time-ms="1506756602000" data-long-form="true" aria-hidden="true">23 Std.</span><span class="u-hiddenVisually" data-aria-label-part="last">Vor 23 Stunden</span></a>
+              </small>
+
+              <div class="ProfileTweet-action ProfileTweet-action--more js-more-ProfileTweet-actions">
+                <div class="dropdown open">
+                  <button class="ProfileTweet-actionButton u-textUserColorHover dropdown-toggle js-dropdown-toggle" 
+                    type="button" aria-haspopup="true" id="menu-0">
+                    <div class="IconContainer js-tooltip" title="Mehr">
+                      <span class="Icon Icon--caretDownLight Icon--small"></span>
+                      <span class="u-hiddenVisually">Mehr</span>
+                    </div>
+                  </button>
+                  <div class="dropdown-menu is-autoCentered dropdown-menu--rightAlign">
+                    <div class="js-first-tabstop" tabindex="0"></div>
+                  <div class="dropdown-caret">
+                    <div class="caret-outer"></div>
+                    <div class="caret-inner"></div>
+                  </div>
+                  <ul tabindex="-1" role="menu" aria-labelledby="menu-0" aria-hidden="false">
+
+                    <li class="copy-link-to-tweet js-actionCopyLinkToTweet" role="presentation">
+                      <button type="button" class="dropdown-link" role="menuitem">Link zum Tweet kopieren</button>
+                    </li>
+                    <li class="embed-link js-actionEmbedTweet" data-nav="embed_tweet" role="presentation">
+                      <button type="button" class="dropdown-link" role="menuitem">Tweet einbetten</button>
+                    </li>
+                    <li class="mute-user-item" role="presentation"><button type="button" class="dropdown-link" role="menuitem"><span class="username u-dir" dir="ltr">@<b>patriarchator</b></span> stummschalten</button></li>
+                    <li class="unmute-user-item" role="presentation">
+                      <button type="button" class="dropdown-link">
+                        Stummschaltung von <span class="username u-dir" dir="ltr">@<b>patriarchator</b></span> aufheben
+                      </button>
+                    </li>
+                    <li class="block-link js-actionBlock" data-nav="block" role="presentation">
+                      <button type="button" class="dropdown-link" role="menuitem">
+                        <span class="username u-dir" dir="ltr">@<b>patriarchator</b></span> blockieren
+                      </button>
+                    </li>
+                    <li class="unblock-link js-actionUnblock" data-nav="unblock" role="presentation">
+                      <button type="button" class="dropdown-link">
+                        <span class="username u-dir" dir="ltr">@<b>patriarchator</b></span> entblocken
+                      </button>
+                    </li>
+                    <li class="report-link js-actionReport" data-nav="report" role="presentation">
+                      <button type="button" class="dropdown-link" role="menuitem">
+                        Tweet melden
+                      </button>
+                    </li>
+                    <li role="presentation">
+                      <button type="button" class="dropdown-link feedback-action action-prompt" 
+                        data-feedback-type="DontLike" role="menuitem">
+                        Mir gefällt dieser Tweet nicht
+                      </button>
+                    </li>
+                    <li class="dropdown-divider" role="presentation"></li>
+                    <li class="js-actionMomentMakerAddTweetToOtherMoment MomentMakerAddTweetToOtherMoment" 
+                      role="presentation" style="display: none;">
+                      <button type="button" class="dropdown-link">Zu anderem Moment hinzufügen</button>
+                    </li>
+                    <li class="js-actionMomentMakerCreateMoment" role="presentation">
+                      <button type="button" class="dropdown-link" role="menuitem">Zu neuem Moment hinzufügen</button>
+                    </li>
+                  </ul>
+                  <div class="js-last-tabstop" tabindex="0"></div></div>
+                </div>
+
+              </div>
+
+            </div>
+
+
+
+
+
+            <div class="js-tweet-text-container">
+              <p class="TweetTextSize  js-tweet-text tweet-text" data-aria-label-part="0" lang="de">Erneut großes Lob an die Basler Zeitung – die Leseempfehlung zum Wochenende:<a href="https://t.co/hBMTX8nK7G" rel="nofollow noopener" dir="ltr" data-expanded-url="https://bazonline.ch/17301936" class="twitter-timeline-link u-hidden" target="_blank" title="https://bazonline.ch/17301936"><span class="tco-ellipsis"></span><span class="invisible">https://</span><span class="js-display-url">bazonline.ch/17301936</span><span class="invisible"></span><span class="tco-ellipsis"><span class="invisible">&nbsp;</span></span></a></p>
+            </div>
+
+
+
+
+
+
+
+
+
+            <div class="card2 js-media-container" data-card2-name="summary_large_image">
+              <div class="js-macaw-cards-iframe-container card-type-summary_large_image" 
+                data-src="/i/cards/tfw/v1/914029555052138496?cardname=summary_large_image&amp;autoplay_disabled=true&amp;forward=true&amp;earned=true&amp;edge=true&amp;lang=de" 
+                data-card-name="summary_large_image" data-card-url="https://t.co/hBMTX8nK7G" 
+                data-publisher-id="17441538" data-creator-id="" data-amplify-content-id="" data-amplify-playlist-url=""
+                data-full-card-iframe-url="/i/cards/tfw/v1/914029555052138496?cardname=summary_large_image&amp;autoplay_disabled=true&amp;earned=true&amp;edge=true&amp;lang=de" 
+                data-has-autoplayable-media="false" data-watched="true" style="min-height: 362px;">
+                <iframe id="xdm_default117_provider" 
+                  style="display: block; margin: 0px; padding: 0px; border: 0px none;" scrolling="no" 
+                  src="https://twitter.com/i/cards/tfw/v1/914029555052138496?cardname=summary_large_image&amp;autoplay_disabled=true&amp;forward=true&amp;earned=true&amp;edge=true&amp;lang=de&amp;card_height=344&amp;scribe_context=%7B%22client%22%3A%22web%22%2C%22page%22%3A%22home%22%2C%22section%22%3A%22home%22%2C%22component%22%3A%22tweet%22%7D&amp;bearer_token=AAAAAAAAAAAAAAAAAAAAAPYXBAAAAAAACLXUNDekMxqa8h%252F40K4moUkGsoc%253DTYfbDKbT3jJPCEVnMYqilB28NHfOPqkca3qaAxGfsyKCs0wRbw#xdm_e=https%3A%2F%2Ftwitter.com&amp;xdm_c=default117&amp;xdm_p=1" 
+                  allowfullscreen="" height="362" frameborder="0" width="100%">
+                </iframe>
+              </div>
+
+            </div>
+
+              <div class="stream-item-footer">
+
+                <div class="ProfileTweet-actionCountList u-hiddenVisually">
+
+                  <span class="ProfileTweet-action--reply u-hiddenVisually">
+                    <span class="ProfileTweet-actionCount" data-tweet-stat-count="23">
+                      <span class="ProfileTweet-actionCountForAria" id="profile-tweet-action-reply-count-aria-914029555052138496" data-aria-label-part="">23 Antworten</span>
+                    </span>
+                  </span>
+                  <span class="ProfileTweet-action--retweet u-hiddenVisually">
+                    <span class="ProfileTweet-actionCount" data-tweet-stat-count="235">
+                      <span class="ProfileTweet-actionCountForAria" id="profile-tweet-action-retweet-count-aria-914029555052138496" data-aria-label-part="0">235 Retweets</span>
+                    </span>
+                  </span>
+                  <span class="ProfileTweet-action--favorite u-hiddenVisually">
+                    <span class="ProfileTweet-actionCount" data-tweet-stat-count="371">
+                      <span class="ProfileTweet-actionCountForAria" id="profile-tweet-action-favorite-count-aria-914029555052138496" data-aria-label-part="0">371 Gefällt mir</span>
+                    </span>
+                  </span>
+                </div>
+
+                <div class="ProfileTweet-actionList js-actions" role="group" aria-label="Tweet-Aktionen">
+                  <div class="ProfileTweet-action ProfileTweet-action--reply">
+                    <button class="ProfileTweet-actionButton js-actionButton js-actionReply" data-modal="ProfileTweet-reply" type="button" aria-describedby="profile-tweet-action-reply-count-aria-914029555052138496">
+                      <div class="IconContainer js-tooltip" title="Antworten">
+                        <span class="Icon Icon--medium Icon--reply"></span>
+                        <span class="u-hiddenVisually">Antworten</span>
+                      </div>
+                      <span class="ProfileTweet-actionCount ">
+                        <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">23</span>
+                      </span>
+                    </button>
+                  </div>
+
+                  <div class="ProfileTweet-action ProfileTweet-action--retweet js-toggleState js-toggleRt">
+                    <button class="ProfileTweet-actionButton  js-actionButton js-actionRetweet" data-modal="ProfileTweet-retweet" type="button" aria-describedby="profile-tweet-action-retweet-count-aria-914029555052138496">
+                      <div class="IconContainer js-tooltip" title="Retweeten">
+                        <span class="Icon Icon--medium Icon--retweet"></span>
+                        <span class="u-hiddenVisually">Retweeten</span>
+                      </div>
+                      <span class="ProfileTweet-actionCount" data-tweet-stat-count="235">
+                        <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">235</span>
+                      </span>
+
+                    </button><button class="ProfileTweet-actionButtonUndo js-actionButton js-actionRetweet" data-modal="ProfileTweet-retweet" type="button">
+                    <div class="IconContainer js-tooltip" title="Retweet rückgängig machen">
+                      <span class="Icon Icon--medium Icon--retweet"></span>
+                      <span class="u-hiddenVisually">Retweetet</span>
+                    </div>
+                    <span class="ProfileTweet-actionCount" data-tweet-stat-count="235">
+                      <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">235</span>
+                    </span>
+
+                  </button>
+                </div>
+
+                <div class="ProfileTweet-action ProfileTweet-action--favorite js-toggleState">
+                  <button class="ProfileTweet-actionButton js-actionButton js-actionFavorite" type="button" aria-describedby="profile-tweet-action-favorite-count-aria-914029555052138496">
+                    <div class="IconContainer js-tooltip" title="Gefällt mir">
+                      <span role="presentation" class="Icon Icon--heart Icon--medium"></span>
+                      <div class="HeartAnimation"></div>
+                      <span class="u-hiddenVisually">Gefällt mir</span>
+                    </div>
+                    <span class="ProfileTweet-actionCount" data-tweet-stat-count="371">
+                      <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">371</span>
+                    </span>
+
+                  </button><button class="ProfileTweet-actionButtonUndo ProfileTweet-action--unfavorite u-linkClean js-actionButton js-actionFavorite" type="button">
+                  <div class="IconContainer js-tooltip" title="Gefällt mir nicht mehr">
+                    <span role="presentation" class="Icon Icon--heart Icon--medium"></span>
+                    <div class="HeartAnimation"></div>
+                    <span class="u-hiddenVisually">Dein Tweet gefällt jemandem</span>
+                  </div>
+                  <span class="ProfileTweet-actionCount" data-tweet-stat-count="371">
+                    <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">371</span>
+                  </span>
+
+                </button>
+              </div>
+
+              <div class="ProfileTweet-action ProfileTweet-action--dm">
+                <button class="ProfileTweet-actionButton u-textUserColorHover js-actionButton js-actionShareViaDM" 
+                  type="button" data-nav="share_tweet_dm">
+                  <div class="IconContainer js-tooltip" title="Direktnachricht">
+                    <span class="Icon Icon--medium Icon--dm"></span>
+                    <span class="u-hiddenVisually">Direktnachricht</span>
+                  </div>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </li>
+
+    <li class="original-tweet-item last-navigable-stream-item">
+
+      <div class="tweet js-stream-tweet js-actionable-tweet js-profile-popup-actionable dismissible-content
+        original-tweet js-original-tweet has-conversation-module" data-tweet-id="914364956065312768" 
+        data-item-id="914364956065312768" data-permalink-path="/KontaktVito/status/914364956065312768" data-conversation-id="914029555052138496" data-is-reply-to="true" data-has-parent-tweet="true" 
+        data-tweet-nonce="914364956065312768-8c0fea3f-5035-4a11-8fbc-06297b100042" data-tweet-stat-initialized="true" data-screen-name="KontaktVito" data-name="Don Vito" data-user-id="1311417524" data-you-follow="true" data-follows-you="true" data-you-block="false" data-mentions="patriarchator HelgaGraf7" data-reply-to-users-json="[{&quot;id_str&quot;:&quot;1311417524&quot;,&quot;screen_name&quot;:&quot;KontaktVito&quot;,&quot;name&quot;:&quot;Don Vito&quot;,&quot;emojified_name&quot;:{&quot;text&quot;:&quot;Don Vito&quot;,&quot;emojified_text_as_html&quot;:&quot;Don Vito&quot;}},{&quot;id_str&quot;:&quot;4002508960&quot;,&quot;screen_name&quot;:&quot;patriarchator&quot;,&quot;name&quot;:&quot;Patriarchator&quot;,&quot;emojified_name&quot;:{&quot;text&quot;:&quot;Patriarchator&quot;,&quot;emojified_text_as_html&quot;:&quot;Patriarchator&quot;}},{&quot;id_str&quot;:&quot;908716649498505216&quot;,&quot;screen_name&quot;:&quot;HelgaGraf7&quot;,&quot;name&quot;:&quot;Ruby37659016&quot;,&quot;emojified_name&quot;:{&quot;text&quot;:&quot;Ruby37659016&quot;,&quot;emojified_text_as_html&quot;:&quot;Ruby37659016&quot;}}]" data-disclosure-type="">
+
+        <div class="context">
+
+        </div>
+
+        <div class="content">
+
+          <div class="stream-item-header">
+            <a class="account-group js-account-group js-action-profile js-user-profile-link js-nav" href="/KontaktVito" data-user-id="1311417524">
+              <img class="avatar js-action-profile-avatar" src="https://pbs.twimg.com/profile_images/912042959000006658/L3369gkl_bigger.jpg" alt="">
+                <span class="FullNameGroup">
+                  <strong class="fullname show-popup-with-id " data-aria-label-part="">Don Vito</strong><span>‏</span><span class="UserBadges"></span><span class="UserNameBreak">&nbsp;</span></span><span class="username u-dir" dir="ltr" data-aria-label-part="">@<b>KontaktVito</b></span></a>
+
+                  <small class="time">
+                    <a href="/KontaktVito/status/914364956065312768" class="tweet-timestamp js-permalink js-nav js-tooltip" title="07:42 - 1. Okt. 2017" data-conversation-id="914029555052138496"><span class="_timestamp js-short-timestamp js-relative-timestamp" data-time="1506836568" data-time-ms="1506836568000" data-long-form="true" aria-hidden="true">48 Min.</span><span class="u-hiddenVisually" data-aria-label-part="last">Vor 48 Minuten</span></a>
+                  </small>
+
+                  <div class="ProfileTweet-action ProfileTweet-action--more js-more-ProfileTweet-actions">
+                    <div class="dropdown">
+                      <button class="ProfileTweet-actionButton u-textUserColorHover dropdown-toggle js-dropdown-toggle" type="button" aria-haspopup="true">
+                        <div class="IconContainer js-tooltip" title="Mehr">
+                          <span class="Icon Icon--caretDownLight Icon--small"></span>
+                          <span class="u-hiddenVisually">Mehr</span>
+                        </div>
+                      </button>
+                      <div class="dropdown-menu is-autoCentered">
+                        <div class="dropdown-caret">
+                          <div class="caret-outer"></div>
+                          <div class="caret-inner"></div>
+                        </div>
+                        <ul>
+
+                          <li class="copy-link-to-tweet js-actionCopyLinkToTweet">
+                            <button type="button" class="dropdown-link">Link zum Tweet kopieren</button>
+                          </li>
+                          <li class="embed-link js-actionEmbedTweet" data-nav="embed_tweet">
+                            <button type="button" class="dropdown-link">Tweet einbetten</button>
+                          </li>
+                          <li class="mute-user-item"><button type="button" class="dropdown-link"><span class="username u-dir" dir="ltr">@<b>KontaktVito</b></span> stummschalten</button></li>
+                          <li class="unmute-user-item"><button type="button" class="dropdown-link">Stummschaltung von <span class="username u-dir" dir="ltr">@<b>KontaktVito</b></span> aufheben</button></li>
+
+                          <li class="block-link js-actionBlock" data-nav="block">
+                            <button type="button" class="dropdown-link"><span class="username u-dir" dir="ltr">@<b>KontaktVito</b></span> blockieren</button>
+                          </li>
+                          <li class="unblock-link js-actionUnblock" data-nav="unblock">
+                            <button type="button" class="dropdown-link"><span class="username u-dir" dir="ltr">@<b>KontaktVito</b></span> entblocken</button>
+                          </li>
+                          <li class="report-link js-actionReport" data-nav="report">
+                            <button type="button" class="dropdown-link">
+
+                              Tweet melden
+                            </button>
+                          </li>
+                          <li>
+                            <button type="button" class="dropdown-link feedback-action action-prompt" data-feedback-type="DontLike">Mir gefällt dieser Tweet nicht</button>
+                          </li>
+                          <li class="dropdown-divider"></li>
+                          <li class="js-actionMomentMakerAddTweetToOtherMoment MomentMakerAddTweetToOtherMoment" style="display: none;">
+                            <button type="button" class="dropdown-link">Zu anderem Moment hinzufügen</button>
+                          </li>
+                          <li class="js-actionMomentMakerCreateMoment">
+                            <button type="button" class="dropdown-link">Zu neuem Moment hinzufügen</button>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <div class="ReplyingToContextBelowAuthor" data-aria-label-part="">
+
+                  Antwort an <a class="pretty-link js-user-profile-link" href="/patriarchator" data-user-id="4002508960" rel="noopener" dir="ltr"><span class="username u-dir" dir="ltr">@<b>patriarchator</b></span></a> <a class="pretty-link js-user-profile-link" href="/HelgaGraf7" data-user-id="908716649498505216" rel="noopener" dir="ltr"><span class="username u-dir" dir="ltr">@<b>HelgaGraf7</b></span></a>
+
+                </div>
+
+                <div class="js-tweet-text-container">
+                  <p class="TweetTextSize  js-tweet-text tweet-text" data-aria-label-part="0" lang="de">Hoffentlich fegt der Sturm sie bald davon</p>
+                </div>
+
+                <div class="stream-item-footer">
+
+                  <div class="ProfileTweet-actionCountList u-hiddenVisually">
+
+
+                    <span class="ProfileTweet-action--reply u-hiddenVisually">
+                      <span class="ProfileTweet-actionCount" aria-hidden="true" data-tweet-stat-count="0">
+                        <span class="ProfileTweet-actionCountForAria" id="profile-tweet-action-reply-count-aria-914364956065312768">0 Antworten</span>
+                      </span>
+                    </span>
+                    <span class="ProfileTweet-action--retweet u-hiddenVisually">
+                      <span class="ProfileTweet-actionCount" aria-hidden="true" data-tweet-stat-count="0">
+                        <span class="ProfileTweet-actionCountForAria" id="profile-tweet-action-retweet-count-aria-914364956065312768">0 Retweets</span>
+                      </span>
+                    </span>
+                    <span class="ProfileTweet-action--favorite u-hiddenVisually">
+                      <span class="ProfileTweet-actionCount" aria-hidden="true" data-tweet-stat-count="0">
+                        <span class="ProfileTweet-actionCountForAria" id="profile-tweet-action-favorite-count-aria-914364956065312768">0 Gefällt mir</span>
+                      </span>
+                    </span>
+                  </div>
+
+                  <div class="ProfileTweet-actionList js-actions" role="group" aria-label="Tweet-Aktionen">
+                    <div class="ProfileTweet-action ProfileTweet-action--reply">
+                      <button class="ProfileTweet-actionButton js-actionButton js-actionReply" data-modal="ProfileTweet-reply" type="button" aria-describedby="profile-tweet-action-reply-count-aria-914364956065312768">
+                        <div class="IconContainer js-tooltip" title="Antworten">
+                          <span class="Icon Icon--medium Icon--reply"></span>
+                          <span class="u-hiddenVisually">Antworten</span>
+                        </div>
+                        <span class="ProfileTweet-actionCount ProfileTweet-actionCount--isZero ">
+                          <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true"></span>
+                        </span>
+                      </button>
+                    </div>
+
+                    <div class="ProfileTweet-action ProfileTweet-action--retweet js-toggleState js-toggleRt">
+                      <button class="ProfileTweet-actionButton  js-actionButton js-actionRetweet" data-modal="ProfileTweet-retweet" type="button" aria-describedby="profile-tweet-action-retweet-count-aria-914364956065312768">
+                        <div class="IconContainer js-tooltip" title="Retweeten">
+                          <span class="Icon Icon--medium Icon--retweet"></span>
+                          <span class="u-hiddenVisually">Retweeten</span>
+                        </div>
+                        <span class="ProfileTweet-actionCount ProfileTweet-actionCount--isZero">
+                          <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true"></span>
+                        </span>
+
+                      </button><button class="ProfileTweet-actionButtonUndo js-actionButton js-actionRetweet" data-modal="ProfileTweet-retweet" type="button">
+                      <div class="IconContainer js-tooltip" title="Retweet rückgängig machen">
+                        <span class="Icon Icon--medium Icon--retweet"></span>
+                        <span class="u-hiddenVisually">Retweetet</span>
+                      </div>
+                      <span class="ProfileTweet-actionCount ProfileTweet-actionCount--isZero">
+                        <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true"></span>
+                      </span>
+
+                    </button>
+                  </div>
+
+
+                  <div class="ProfileTweet-action ProfileTweet-action--favorite js-toggleState">
+                    <button class="ProfileTweet-actionButton js-actionButton js-actionFavorite" type="button" aria-describedby="profile-tweet-action-favorite-count-aria-914364956065312768">
+                      <div class="IconContainer js-tooltip" title="Gefällt mir">
+                        <span role="presentation" class="Icon Icon--heart Icon--medium"></span>
+                        <div class="HeartAnimation"></div>
+                        <span class="u-hiddenVisually">Gefällt mir</span>
+                      </div>
+                      <span class="ProfileTweet-actionCount ProfileTweet-actionCount--isZero">
+                        <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true"></span>
+                      </span>
+
+                    </button><button class="ProfileTweet-actionButtonUndo ProfileTweet-action--unfavorite u-linkClean js-actionButton js-actionFavorite" type="button">
+                    <div class="IconContainer js-tooltip" title="Gefällt mir nicht mehr">
+                      <span role="presentation" class="Icon Icon--heart Icon--medium"></span>
+                      <div class="HeartAnimation"></div>
+                      <span class="u-hiddenVisually">Dein Tweet gefällt jemandem</span>
+                    </div>
+                    <span class="ProfileTweet-actionCount ProfileTweet-actionCount--isZero">
+                      <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true"></span>
+                    </span>
+
+                  </button>
+                </div>
+
+
+                <div class="ProfileTweet-action ProfileTweet-action--dm">
+                  <button class="ProfileTweet-actionButton u-textUserColorHover js-actionButton js-actionShareViaDM" type="button" data-nav="share_tweet_dm">
+                    <div class="IconContainer js-tooltip" title="Direktnachricht">
+                      <span class="Icon Icon--medium Icon--dm"></span>
+                      <span class="u-hiddenVisually">Direktnachricht</span>
+                    </div>
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <span class="u-hiddenVisually">Ende der Unterhaltung</span>
+      </li> 
