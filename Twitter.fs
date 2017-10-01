@@ -22,7 +22,10 @@ type Secret = { consumerKey : string;
                 accessTokenSecret : string }
 
 let secret =
-    Environment.GetEnvironmentVariable("HOME") + @"\.ssh\secret.json"
+    if Environment.GetEnvironmentVariable("HOME").Contains("Windows") then 
+        Environment.GetEnvironmentVariable("HOME") + @"\.ssh\secret.json"
+    else 
+        Environment.GetEnvironmentVariable("HOME") + @"/.ssh/secret.json"
     |> File.ReadAllText
     |> JObject.Parse
 

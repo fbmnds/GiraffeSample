@@ -112,8 +112,8 @@ let main argv =
     let certificate = new X509Certificate2(pfxFile, "GiraffeSample")
     WebHostBuilder()
         .UseKestrel(fun options -> 
-            options.Listen(IPAddress.Any, 57877) |> ignore
-            options.Listen(IPAddress.Loopback, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, "GiraffeSample") |> ignore)))
+            //options.Listen(IPAddress.Any, 57877) |> ignore
+            options.Listen(IPAddress.Any, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, "GiraffeSample") |> ignore)))
         .UseIISIntegration()
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
