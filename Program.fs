@@ -79,7 +79,9 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [
-        GET >=> route "/tweets" >=> handleTwitter
+        GET >=> routef "/tweets/%s" (fun name -> 
+            let twitter = Twitter.searchTweets [("screen_name",(sprintf "@%s" name))] |> JObject.Parse
+            text ((twitter.Item("tweets")).First.ToString()))
 
         GET >=> route "/github/repos" >=> handleGithub
         GET >=> route "/github/offline/repos" >=> handleGithubOffline
