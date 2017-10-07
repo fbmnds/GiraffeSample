@@ -52,9 +52,9 @@ let handleDelLunch (next: HttpFunc) (ctx: HttpContext) =
         return! text (sprintf "Deleted %A from lunch spots." lunch.ID) next ctx
     }
 
-let handleTwitter (next: HttpFunc) (ctx: HttpContext) =
+let handleTwitter name (next: HttpFunc) (ctx: HttpContext) =
     task {
-        let twitter = Twitter.searchTweets [("screen_name","@fbmnds")] |> JObject.Parse
+        let twitter = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))] |> JObject.Parse
         let tweets = (twitter.Item("tweets")).First.ToString()
         return! text tweets next ctx
     }
@@ -79,9 +79,7 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [
-        GET >=> routef "/tweets/%s" (fun name -> 
-            let twitter = Twitter.searchTweets [("screen_name",(sprintf "@%s" name))] |> JObject.Parse
-            text ((twitter.Item("tweets")).First.ToString()))
+        GET >=> routef "/tweets/%s" (fun name -> (handleTwitter name))
 
         GET >=> route "/github/repos" >=> handleGithub
         GET >=> route "/github/offline/repos" >=> handleGithubOffline
