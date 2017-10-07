@@ -27,6 +27,7 @@
     <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-100" />
     <PackageReference Include="newtonsoft.json" Version="10.0.3" />
     <PackageReference Include="NPoco" Version="3.7.2" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="1.1.8" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.0" />
