@@ -26,6 +26,7 @@ open Giraffe.HttpContextExtensions
 open LunchTypes
 open DataAccess
 open Twitter
+open Github
 
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
@@ -58,6 +59,20 @@ let handleTwitter (next: HttpFunc) (ctx: HttpContext) =
         return! text tweets next ctx
     }
 
+
+let handleGithub (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let repos,_ = Github.processRepositories()
+        return! text repos next ctx
+    }
+
+let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Github.offlineRepositories()) next ctx
+    }
+
+
+
 // ---------------------------------
 // Web app
 // ---------------------------------
@@ -65,9 +80,14 @@ let handleTwitter (next: HttpFunc) (ctx: HttpContext) =
 let webApp =
     choose [
         GET >=> route "/tweets" >=> handleTwitter
+
+        GET >=> route "/github/repos" >=> handleGithub
+        GET >=> route "/github/offline/repos" >=> handleGithubOffline
+
         GET >=> route "/lunch" >=> handleLunchFilter
         POST >=> route "/lunch/add" >=> handleAddLunch
         POST >=> route "/lunch/del" >=> handleDelLunch
+
         setStatusCode 404 >=> text "Not Found" 
     ]
 
@@ -84,7 +104,7 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // ---------------------------------
 
 let configureApp (app : IApplicationBuilder) =
-    let options = (new RewriteOptions()).AddRedirectToHttps()
+    let options = (RewriteOptions()).AddRedirectToHttps()
     app.UseGiraffeErrorHandler errorHandler
     app.UseStaticFiles() |> ignore
     app.UseRewriter(options) |> ignore
@@ -95,8 +115,8 @@ let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()
     let env = sp.GetService<IHostingEnvironment>()
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
-    let options = (new RewriteOptions()).AddRedirectToHttps()
-    services.Configure<MvcOptions>(fun options -> options.Filters.Add(new RequireHttpsAttribute())) |> ignore
+    let options = (RewriteOptions()).AddRedirectToHttps()
+    services.Configure<MvcOptions>(fun options -> options.Filters.Add(RequireHttpsAttribute())) |> ignore
     services.AddRazorEngine viewsFolderPath |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
@@ -112,7 +132,6 @@ let main argv =
     let certificate = new X509Certificate2(pfxFile, "GiraffeSample")
     WebHostBuilder()
         .UseKestrel(fun options -> 
-            //options.Listen(IPAddress.Any, 57877) |> ignore
             options.Listen(IPAddress.Any, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, "GiraffeSample") |> ignore)))
         .UseIISIntegration()
         .UseWebRoot(webRoot)

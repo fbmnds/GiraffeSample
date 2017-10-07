@@ -23,11 +23,13 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.*" />
+    <PackageReference Include="System.Net.Http" Version="4.3.0" />
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
     <PackageReference Include="Giraffe" Version="0.1.0-beta-100" />
     <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-100" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="1.1.8" />
     <PackageReference Include="newtonsoft.json" Version="10.0.3" />
     <PackageReference Include="NPoco" Version="3.7.2" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="1.1.8" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.0" />
@@ -40,6 +42,7 @@
     <Compile Include="LunchTypes.fs" />
     <Compile Include="DataAccess.fs" />
     <Compile Include="Twitter.fs" />
+    <Compile Include="Github.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
