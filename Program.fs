@@ -52,11 +52,17 @@ let handleDelLunch (next: HttpFunc) (ctx: HttpContext) =
         return! text (sprintf "Deleted %A from lunch spots." lunch.ID) next ctx
     }
 
-let handleTwitter name (next: HttpFunc) (ctx: HttpContext) =
+let handleTwitterFeeds name (next: HttpFunc) (ctx: HttpContext) =
     task {
         let twitter = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))] |> JObject.Parse
         let tweets = (twitter.Item("tweets")).First.ToString()
         return! text tweets next ctx
+    }
+
+let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let! post =  ctx.BindJson<Twitter.Post>()
+        return! text (Twitter.postTweet post) next ctx
     }
 
 
@@ -79,7 +85,8 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [
-        GET >=> routef "/tweets/%s" (fun name -> (handleTwitter name))
+        GET >=> routef "/tweets/%s" (fun name -> (handleTwitterFeeds name))
+        POST >=> route "/tweets/post" >=> handleTwitterPost
 
         GET >=> route "/github/repos" >=> handleGithub
         GET >=> route "/github/offline/repos" >=> handleGithubOffline
@@ -150,4 +157,14 @@ curl -k -i -X POST -H 'Content-Type: application/json' \
 curl -k -i -X POST -H 'Content-Type: application/json' \
  -d '{"ID":4}' \
  https://localhost:57878/lunch/del
+
+curl -k -i -X POST -H 'Content-Type: application/json' \
+ -d '{"status":"via gab.ai https://gab.ai/Bergschreck/posts/13109522"}' \
+ https://localhost:57878/tweets/post
+
+curl -k -i -X POST -H 'Content-Type: application/json' \
+ -d '{"status":"via unzensuriert.at  https://t.co/pKACAuWp8M"}' \
+ https://localhost:57878/tweets/post
+
+
 *)

@@ -16,6 +16,20 @@ open FSharp.Data.Json.Extensions
 
 // Twitter OAuth Constants
 
+[<CLIMutable>]
+type Post =
+    { status: string
+      in_reply_to_status_id: Option<string>
+      possibly_sensitive: Option<bool> 
+      lat: Option<float>
+      long: Option<float>
+      place_id: Option<string>
+      display_coordinates: Option<bool>
+      trim_user: Option<bool>
+      media_ids: Option<string>
+      enable_dm_commands: Option<bool>
+      fail_dm_commands: Option<bool> }
+
 type Secret = { consumerKey : string;
                 consumerSecret : string;
                 accessToken : string;
@@ -210,11 +224,12 @@ let getTweet ((oauth_token', oauth_token_secret'), pin) =
 // getTweet (parms, "0824995");;
 
 
-let postTweet (tweet: string option) =
+let postTweet (tweet: Post) =
   let tweet_ = 
-    match tweet with
-    | Some tweet -> tweet  |> urlEncode
-    | _ -> "F# scripted tweet +++ " + sprintf "%d #10m" (System.Random(10).Next()) |> urlEncode
+    if tweet.status = "" then 
+        sprintf "F# scripted tweet +++ %d #10m" (System.Random(10).Next()) |> urlEncode
+    else
+        tweet.status |> urlEncode
   let tweetData = System.Text.Encoding.ASCII.GetBytes("status="+tweet_)
   let statusUrl = "https://api.twitter.com/1.1/statuses/update.json"
   let queryParameters =
