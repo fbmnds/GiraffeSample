@@ -44,11 +44,17 @@ let handleDelLunch (next: HttpFunc) (ctx: HttpContext) =
         return! text (sprintf "Deleted %A from lunch spots." lunch.ID) next ctx
     }
 
-let handleTwitterFeeds name (next: HttpFunc) (ctx: HttpContext) =
+let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
         let twitter = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))] |> JObject.Parse
         let tweets = (twitter.Item("tweets")).First.ToString()
         return! text tweets next ctx
+    }
+
+let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let std,err = Thumbnail.execute name feed
+        return! text (sprintf "%s\n%s" std err) next ctx
     }
 
 let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
@@ -77,15 +83,17 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [
-        POST >=> route "/tweets/post" >=> handleTwitterPost
-        GET >=> routef "/tweets/%s" (fun name -> (handleTwitterFeeds name))
-        
-        GET >=> route "/github/repos" >=> handleGithub
-        GET >=> route "/github/offline/repos" >=> handleGithubOffline
+        POST >=> route  "/tweets/post"    >=> handleTwitterPost
+        GET  >=> routef "/tweets/feed/%s" (fun name -> (handleTwitterFeed name))
 
-        GET >=> route "/lunch" >=> handleLunchFilter
-        POST >=> route "/lunch/add" >=> handleAddLunch
-        POST >=> route "/lunch/del" >=> handleDelLunch
+        GET  >=> routef "/gab/thumbnail/%s/%s" (fun (name,post) -> (handleGabThumbnail name post))
+        
+        GET  >=> route  "/github/repos"         >=> handleGithub
+        GET  >=> route  "/github/offline/repos" >=> handleGithubOffline
+
+        GET  >=> route  "/lunch"     >=> handleLunchFilter
+        POST >=> route  "/lunch/add" >=> handleAddLunch
+        POST >=> route  "/lunch/del" >=> handleDelLunch
 
         setStatusCode 404 >=> text "Not Found" 
     ]

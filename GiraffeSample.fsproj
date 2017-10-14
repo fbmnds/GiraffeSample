@@ -42,6 +42,7 @@
     <Compile Include="Json.fs" />
     <Compile Include="LunchTypes.fs" />
     <Compile Include="DataAccess.fs" />
+    <Compile Include="Thumbnail.fs" />
     <Compile Include="Twitter.fs" />
     <Compile Include="Github.fs" />
     <Compile Include="Program.fs" />
