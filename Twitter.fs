@@ -4,56 +4,57 @@ open System
 open System.IO
 open System.Net
 open System.Security.Cryptography
+open System.Runtime.Serialization
 open System.Text
 
 open Newtonsoft.Json.Linq
 
-(*
-open FSharp.Data
-open FSharp.Data.Json
-open FSharp.Data.Json.Extensions
-*)
 
-// Twitter OAuth Constants
-
-[<CLIMutable>]
+//[<DataContract(Name="repo")>]
+//[<CLIMutable>]
 type Post =
-    { status: string
-      in_reply_to_status_id: Option<string>
-      possibly_sensitive: Option<bool> 
-      lat: Option<float>
-      long: Option<float>
-      place_id: Option<string>
-      display_coordinates: Option<bool>
-      trim_user: Option<bool>
-      media_ids: Option<string>
-      enable_dm_commands: Option<bool>
-      fail_dm_commands: Option<bool> }
+    { 
+        status                : string
+        in_reply_to_status_id : Option<string>
+        possibly_sensitive    : Option<bool> 
+        lat                   : Option<float>
+        long                  : Option<float>
+        place_id              : Option<string>
+        display_coordinates   : Option<bool>
+        trim_user             : Option<bool>
+        media_ids             : Option<string>
+        enable_dm_commands    : Option<bool>
+        fail_dm_commands      : Option<bool> 
+    }
 
-type Secret = { consumerKey : string;
-                consumerSecret : string;
-                accessToken : string;
-                accessTokenSecret : string }
+type Secret = 
+    { 
+        consumerKey       : string
+        consumerSecret    : string
+        accessToken       : string
+        accessTokenSecret : string 
+    }
 
-let secret =
-    if Environment.GetEnvironmentVariable("HOME").Contains("Windows") then 
-        Environment.GetEnvironmentVariable("HOME") + @"\.ssh\secret.json"
-    else 
-        Environment.GetEnvironmentVariable("HOME") + @"/.ssh/secret.json"
-    |> File.ReadAllText
-    |> JObject.Parse
+let secret : Secret =
+    let s = 
+        let home = Environment.GetEnvironmentVariable("HOME")
+        if home.Contains(@":\") then home + @"\.ssh\secret.json" else home + @"/.ssh/secret.json"
+        |> File.ReadAllText
+        |> JObject.Parse
+    { 
+        consumerKey       = s.Item("consumerKey").ToString()
+        consumerSecret    = s.Item("consumerSecret").ToString()
+        accessToken       = s.Item("accessToken").ToString()
+        accessTokenSecret = s.Item("accessTokenSecret").ToString()
+    }
 
-let s : Secret =
-  {consumerKey = secret.Item("consumerKey").ToString();
-   consumerSecret = secret.Item("consumerSecret").ToString();
-   accessToken = secret.Item("accessToken").ToString();
-   accessTokenSecret = secret.Item("accessTokenSecret").ToString();}
-
-let requestTokenURI = "https://api.twitter.com/oauth/request_token"
-let accessTokenURI = "https://api.twitter.com/oauth/access_token"
-let authorizeURI = "https://api.twitter.com/oauth/authorize"
+let requestTokenURI      = "https://api.twitter.com/oauth/request_token"
+let accessTokenURI       = "https://api.twitter.com/oauth/access_token"
+let authorizeURI         = "https://api.twitter.com/oauth/authorize"
 let verifyCredentialsURI = "https://api.twitter.com/1.1/account/verify_credentials.json"
-let searchURI = "https://api.twitter.com/1.1/statuses/user_timeline.json"
+let searchURI            = "https://api.twitter.com/1.1/statuses/user_timeline.json" 
+let homeTimelineURI      = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+let statusURI            = "https://api.twitter.com/1.1/statuses/update.json"
 
 // Utilities
 
@@ -68,137 +69,117 @@ let urlEncode str =
 
 // Core Algorithms
 let hmacsha1 signingKey str =
-    let converter = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey : string))
-    let inBytes = Encoding.ASCII.GetBytes(str : string)
-    let outBytes = converter.ComputeHash(inBytes)
-    Convert.ToBase64String(outBytes)
+    use converter = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey : string))
+    Encoding.ASCII.GetBytes(str : string)
+    |> converter.ComputeHash
+    |> Convert.ToBase64String
 
 let compositeSigningKey consumerSecret tokenSecret =
     urlEncode(consumerSecret) + "&" + urlEncode(tokenSecret)
 
 let baseString httpMethod baseUri queryParameters =
-    httpMethod + "&" +
-    urlEncode(baseUri) + "&" +
-      (queryParameters
-       |> Seq.sortBy (fun (k,v) -> k)
-       |> Seq.map (fun (k,v) -> urlEncode(k)+"%3D"+urlEncode(v))
-       |> String.concat "%26")
+    queryParameters
+    |> Seq.sortBy (fun (k,_) -> k)
+    |> Seq.map (fun (k,v) -> urlEncode(k) + "%3D" + urlEncode(v))
+    |> String.concat "%26"
+    |> sprintf "%s&%s&%s" httpMethod (urlEncode(baseUri))
 
 let createAuthorizeHeader queryParameters =
-    let headerValue =
-        "OAuth " +
-        (queryParameters
-         |> Seq.map (fun (k,v) -> urlEncode(k)+"\x3D\""+urlEncode(v)+"\"")
-         |> String.concat ",")
-    headerValue
+    queryParameters
+    |> Seq.map (fun (k,v) -> urlEncode(k)+"\x3D\""+urlEncode(v)+"\"")
+    |> String.concat ","
+    |> sprintf "OAuth %s"
 
 let currentUnixTime() =
-  floor (DateTime.UtcNow - DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalSeconds
-  |> int64
-  |> sprintf "%d"
+    (DateTime.UtcNow - DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalSeconds
+    |> floor
+    |> int64
+    |> sprintf "%d"
+
+let oauthParameters consumerKey accessToken =
+    [
+        "oauth_version",          "1.0"
+        "oauth_consumer_key",     consumerKey
+        "oauth_nonce",            System.Guid.NewGuid().ToString().Substring(24)
+        "oauth_signature_method", "HMAC-SHA1"
+        "oauth_timestamp",        currentUnixTime()
+        "oauth_token",            accessToken 
+    ]
+
+let oauthRedirectParameters consumerKey =
+    [
+        "oauth_callback",         "oob"
+        "oauth_consumer_key",     consumerKey
+        "oauth_nonce",            System.Guid.NewGuid().ToString().Substring(24)
+        "oauth_signature_method", "HMAC-SHA1"
+        "oauth_timestamp",        currentUnixTime()
+        "oauth_version",          "1.0"
+    ]
 
 /// Request a token from Twitter and return:
 /// oauth_token, oauth_token_secret, oauth_callback_confirmed
-let requestToken() =
-    let signingKey = compositeSigningKey s.consumerSecret ""
-
-    let queryParameters =
-        ["oauth_callback", "oob";
-         "oauth_consumer_key", s.consumerKey;
-         "oauth_nonce", System.Guid.NewGuid().ToString().Substring(24);
-         "oauth_signature_method", "HMAC-SHA1";
-         "oauth_timestamp", currentUnixTime();
-         "oauth_version", "1.0"]
-
-    let signingString = baseString "POST" requestTokenURI queryParameters
-    let oauth_signature = hmacsha1 signingKey signingString
-
-    let realQueryParameters = ("oauth_signature", oauth_signature)::queryParameters
-
-    let req = WebRequest.Create(requestTokenURI, Method="POST")
-    let headerValue = createAuthorizeHeader realQueryParameters
+let requestOAuthToken () =
+    let queryParameters       = oauthRedirectParameters secret.consumerKey
+    let signingString         = baseString "POST" requestTokenURI queryParameters
+    let signingKey            = compositeSigningKey secret.consumerSecret ""
+    let oauth_signature       = hmacsha1 signingKey signingString
+    let signedQueryParameters = ("oauth_signature", oauth_signature) :: queryParameters
+    let req                   = WebRequest.Create(requestTokenURI, Method="POST")
+    let headerValue           = createAuthorizeHeader signedQueryParameters
     req.Headers.Add(HttpRequestHeader.Authorization, headerValue)
 
-    let resp = req.GetResponse()
-    let stream = resp.GetResponseStream()
-    let txt = (new StreamReader(stream)).ReadToEnd()
-
-    let parts = txt.Split('&')
+    use resp   = req.GetResponse()
+    use strm  = new StreamReader(resp.GetResponseStream())
+    let parts  = strm.ReadToEnd().Split('&')
     (parts.[0].Split('=').[1],
      parts.[1].Split('=').[1],
      parts.[2].Split('=').[1] = "true")
 
-/// Get an access token from LinkedIn and returns:
-/// oauth_token, oauth_token_secret
+
+/// Get an access token and access token secret
 let accessToken token tokenSecret verifier =
-    let signingKey = compositeSigningKey s.consumerSecret tokenSecret
-
-    let queryParameters =
-        ["oauth_consumer_key", s.consumerKey;
-         "oauth_nonce", System.Guid.NewGuid().ToString().Substring(24);
-         "oauth_signature_method", "HMAC-SHA1";
-         "oauth_token", token;
-         "oauth_timestamp", currentUnixTime();
-         "oauth_verifier", verifier;
-         "oauth_version", "1.0"]
-
-    let signingString = baseString "POST" accessTokenURI queryParameters
-    let oauth_signature = hmacsha1 signingKey signingString
-
-    let realQueryParameters = ("oauth_signature", oauth_signature)::queryParameters
-
-    let req = WebRequest.Create(accessTokenURI, Method="POST")
-    let headerValue = createAuthorizeHeader realQueryParameters
+    let queryParameters     = ("oauth_verifier",verifier) :: (oauthParameters secret.consumerKey token)
+    let signingString       = baseString "POST" accessTokenURI queryParameters
+    let signingKey          = compositeSigningKey secret.consumerSecret tokenSecret
+    let oauth_signature     = hmacsha1 signingKey signingString
+    let realQueryParameters = ("oauth_signature", oauth_signature) :: queryParameters
+    let req                 = WebRequest.Create(accessTokenURI, Method="POST")
+    let headerValue         = createAuthorizeHeader realQueryParameters
     req.Headers.Add(HttpRequestHeader.Authorization, headerValue)
 
-    let resp = req.GetResponse()
-    let stream = resp.GetResponseStream()
-    let txt = (new StreamReader(stream)).ReadToEnd()
-
-    let parts = txt.Split('&')
+    use resp   = req.GetResponse()
+    use stream = new StreamReader(resp.GetResponseStream())
+    let txt    = stream.ReadToEnd()
+    let parts  = txt.Split('&')
     (parts.[0].Split('=').[1],
      parts.[1].Split('=').[1])
 
 /// Compute the 'Authorization' header for the given request data
-let authHeaderAfterAuthenticated url httpMethod token tokenSecret queryParams =
-    let signingKey = compositeSigningKey s.consumerSecret tokenSecret
+let authHeaderAfterAuthenticated url httpMethod token tokenSecret queryParameters =
+    let signingKey             = compositeSigningKey secret.consumerSecret tokenSecret
+    let queryParams            = oauthParameters secret.consumerKey token
+    let signingQueryParameters = queryParams @ queryParameters
+    let signingString          = baseString httpMethod url signingQueryParameters
+    let oauth_signature        = hmacsha1 signingKey signingString
+    ("oauth_signature", oauth_signature) :: queryParams
+    |> createAuthorizeHeader 
 
-    let queryParameters =
-        ["oauth_consumer_key", s.consumerKey;
-         "oauth_nonce", System.Guid.NewGuid().ToString().Substring(24);
-         "oauth_signature_method", "HMAC-SHA1";
-         "oauth_token", token;
-         "oauth_timestamp", currentUnixTime();
-         "oauth_version", "1.0"]
-
-    let signingQueryParameters =
-        List.append queryParameters queryParams
-
-    let signingString = baseString httpMethod url signingQueryParameters
-    let oauth_signature = hmacsha1 signingKey signingString
-    let realQueryParameters = ("oauth_signature", oauth_signature)::queryParameters
-    let headerValue = createAuthorizeHeader realQueryParameters
-    headerValue
 
 /// Add an Authorization header to an existing WebRequest
 let addAuthHeaderForUser (webRequest : WebRequest) token tokenSecret queryParams =
-    let url = webRequest.RequestUri.ToString()
+    let url        = webRequest.RequestUri.ToString()
     let httpMethod = webRequest.Method
-    let header = authHeaderAfterAuthenticated url httpMethod token tokenSecret queryParams
+    let header     = authHeaderAfterAuthenticated url httpMethod token tokenSecret queryParams
     webRequest.Headers.Add(HttpRequestHeader.Authorization, header)
 
-type System.Net.WebRequest with
-    /// Add an Authorization header to the WebRequest for the provided user authorization tokens and query parameters
-    member this.AddOAuthHeader(userToken, userTokenSecret, queryParams) =
-        addAuthHeaderForUser this userToken userTokenSecret queryParams
 
 let captureOAuth() =
     // Compute URL to send user to to allow our app to connect with their credentials,
     // then open the browser to have them accept
-    let oauth_token'', oauth_token_secret'', oauth_callback_confirmed = requestToken()
-    let url = authorizeURI + "?oauth_token=" + oauth_token''
+    let oauth_token, oauth_token_secret, _ = requestOAuthToken()
+    let url = sprintf "%s?oauth_token=%s" authorizeURI oauth_token
     System.Diagnostics.Process.Start("iexplore.exe", url) |> ignore
-    (oauth_token'', oauth_token_secret'')
+    (oauth_token, oauth_token_secret)
 
     // *******NOTE********:
     // Get the 7 digit number from the web page, pass it to the function below to get oauth_token
@@ -209,15 +190,13 @@ let captureOAuth() =
 
 
 let getTweet ((oauth_token', oauth_token_secret'), pin) =
-    // Test 1:
-    let oauth_token, oauth_token_secret = accessToken oauth_token' oauth_token_secret' pin
-    let streamSampleUrl2 = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-    let req = WebRequest.Create(streamSampleUrl2)
-    req.AddOAuthHeader(oauth_token, oauth_token_secret, [])
-    let resp = req.GetResponse()
-    let strm = resp.GetResponseStream()
-    let text = (new StreamReader(strm)).ReadToEnd()
-    text
+    let oauth_token, 
+        oauth_token_secret = accessToken oauth_token' oauth_token_secret' pin
+    let req                = WebRequest.Create(homeTimelineURI)
+    addAuthHeaderForUser req oauth_token oauth_token_secret []
+    use resp = req.GetResponse()
+    use strm = new StreamReader(resp.GetResponseStream())
+    strm.ReadToEnd()
 
 // let parms = captureOAuth();;
 
@@ -230,25 +209,18 @@ let postTweet (tweet: Post) =
         sprintf "F# scripted tweet +++ %d #10m" (System.Random(10).Next()) |> urlEncode
     else
         tweet.status |> urlEncode
-  let tweetData = System.Text.Encoding.ASCII.GetBytes("status="+tweet_)
-  let statusUrl = "https://api.twitter.com/1.1/statuses/update.json"
-  let queryParameters =
-      ["oauth_version","1.0";
-       "oauth_consumer_key",s.consumerKey;
-       "oauth_nonce",System.Guid.NewGuid().ToString().Substring(24);
-       "oauth_signature_method","HMAC-SHA1";
-       "oauth_timestamp",currentUnixTime();
-       "oauth_token",s.accessToken ]
-  let signingString = baseString "POST" statusUrl ([("status",tweet_)] |> List.append queryParameters)
-  let signingKey = compositeSigningKey s.consumerSecret s.accessTokenSecret
-  let oauth_signature = hmacsha1 signingKey signingString
+  let tweetData           = System.Text.Encoding.ASCII.GetBytes("status="+tweet_)
+  let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
+  let signingString       = baseString "POST" statusURI ([("status",tweet_)] @ queryParameters)
+  let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
+  let oauth_signature     = hmacsha1 signingKey signingString
   let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
   System.Net.ServicePointManager.Expect100Continue <- false
-  let req = WebRequest.Create(statusUrl)
+  let req = WebRequest.Create(statusURI)
   //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
   req.Headers.Add("Authorization",AuthorizationHeader)
-  req.Method <- "POST"
-  req.ContentType <- "application/x-www-form-urlencoded"
+  req.Method        <- "POST"
+  req.ContentType   <- "application/x-www-form-urlencoded"
   req.ContentLength <- (int64) tweetData.Length
   use wstream = req.GetRequestStream() 
   wstream.Write(tweetData,0, (tweetData.Length))
@@ -256,60 +228,45 @@ let postTweet (tweet: Post) =
   wstream.Close()
   req.Timeout <- 3 * 60 * 1000
   use resp = req.GetResponse()
-  use strm = resp.GetResponseStream()
-  let text = (new StreamReader(strm)).ReadToEnd()
-  text
+  use strm = new StreamReader(resp.GetResponseStream())
+  strm.ReadToEnd()
 
 
 
-let verifyCredentials() =
-  let queryParameters =
-      ["oauth_version","1.0";
-       "oauth_consumer_key",s.consumerKey;
-       "oauth_nonce",System.Guid.NewGuid().ToString().Substring(24);
-       "oauth_signature_method","HMAC-SHA1";
-       "oauth_timestamp",currentUnixTime();
-       "oauth_token",s.accessToken ]
-  let signingString = baseString "GET" verifyCredentialsURI queryParameters
-  let signingKey = compositeSigningKey s.consumerSecret s.accessTokenSecret
-  let oauth_signature = hmacsha1 signingKey signingString
+let verifyCredentials () =
+  let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
+  let signingString       = baseString "GET" verifyCredentialsURI queryParameters
+  let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
+  let oauth_signature     = hmacsha1 signingKey signingString
   let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
   System.Net.ServicePointManager.Expect100Continue <- false
   let req = WebRequest.Create(verifyCredentialsURI)
   //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
   req.Headers.Add("Authorization",AuthorizationHeader)
-  req.Method <- "GET"
+  req.Method      <- "GET"
   req.ContentType <- "application/x-www-form-urlencoded"
-  let resp = req.GetResponse()
-  let strm = resp.GetResponseStream()
-  let text = (new StreamReader(strm)).ReadToEnd()
-  text
+  use resp = req.GetResponse()
+  use strm = new StreamReader(resp.GetResponseStream())
+  strm.ReadToEnd()
 
 
 let searchTweets searchParams =
     try
-      let q = (searchParams |> Seq.map (fun (k,v) -> k+"="+v) |> String.concat "&")
-      let currSearchURI = searchURI+"?"+q
-      let queryParameters =
-          ["oauth_version","1.0";
-           "oauth_consumer_key",s.consumerKey;
-           "oauth_nonce",System.Guid.NewGuid().ToString().Substring(24);
-           "oauth_signature_method","HMAC-SHA1";
-           "oauth_timestamp",currentUnixTime();
-           "oauth_token",s.accessToken ]
-      let signingString = baseString "GET" searchURI (queryParameters @ searchParams)
-      let signingKey = compositeSigningKey s.consumerSecret s.accessTokenSecret
-      let oauth_signature = hmacsha1 signingKey signingString
+      let currSearchURI       = searchParams |> Seq.map (fun (k,v) -> k+"="+v) |> String.concat "&" |> sprintf "%s?%s" searchURI
+      let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
+      let signingString       = baseString "GET" searchURI (queryParameters @ searchParams)
+      let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
+      let oauth_signature     = hmacsha1 signingKey signingString
       let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
       System.Net.ServicePointManager.Expect100Continue <- false
       let req = WebRequest.Create(currSearchURI)
       req.Headers.Add("Authorization",AuthorizationHeader)
-      req.Method <- "GET"
+      req.Method      <- "GET"
       req.ContentType <- "application/x-www-form-urlencoded"
-      let resp = req.GetResponse()
-      let strm = resp.GetResponseStream()
-      let text = (new StreamReader(strm)).ReadToEnd()
-      sprintf "{\"tweets\":%s}" text
+      use resp = req.GetResponse()
+      use strm = new StreamReader(resp.GetResponseStream())
+      strm.ReadToEnd()
+      |> sprintf "{\"tweets\":%s}" 
     with
     | _ -> "{\"tweets\":[]}"
 
