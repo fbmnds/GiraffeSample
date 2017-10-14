@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\*.fs" />
+    <Compile Include="Json.fs" />
     <Compile Include="LunchTypes.fs" />
     <Compile Include="DataAccess.fs" />
     <Compile Include="Twitter.fs" />

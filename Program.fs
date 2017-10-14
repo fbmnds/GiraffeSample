@@ -3,8 +3,6 @@ module GiraffeSample.App
 open System
 open System.IO
 open System.Net
-open System.Threading.Tasks
-open System.Collections.Generic
 open System.Security.Cryptography.X509Certificates
 
 open Microsoft.AspNetCore.Builder
@@ -18,19 +16,13 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
 open Giraffe.Razor.Middleware
-open GiraffeSample.Models
 open Giraffe.HttpContextExtensions
+
+open Newtonsoft.Json.Linq
 
 open LunchTypes
 open DataAccess
-open Twitter
-open Github
-
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
-
 
 let handleLunchFilter (next: HttpFunc) (ctx: HttpContext) =
     let filter = ctx.BindQueryString<LunchFilter>()
@@ -85,9 +77,9 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [
-        GET >=> routef "/tweets/%s" (fun name -> (handleTwitterFeeds name))
         POST >=> route "/tweets/post" >=> handleTwitterPost
-
+        GET >=> routef "/tweets/%s" (fun name -> (handleTwitterFeeds name))
+        
         GET >=> route "/github/repos" >=> handleGithub
         GET >=> route "/github/offline/repos" >=> handleGithubOffline
 
@@ -157,6 +149,10 @@ curl -k -i -X POST -H 'Content-Type: application/json' \
 curl -k -i -X POST -H 'Content-Type: application/json' \
  -d '{"ID":4}' \
  https://localhost:57878/lunch/del
+
+curl -k -i -X POST -H 'Content-Type: application/json' \
+ -d '{"status":""}' \
+ https://localhost:57878/tweets/post
 
 curl -k -i -X POST -H 'Content-Type: application/json' \
  -d '{"status":"via gab.ai https://gab.ai/Bergschreck/posts/13109522"}' \
