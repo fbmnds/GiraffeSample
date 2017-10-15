@@ -4,7 +4,6 @@ open System
 open System.IO
 open System.Net
 open System.Security.Cryptography
-open System.Runtime.Serialization
 open System.Text
 
 open Newtonsoft.Json.Linq

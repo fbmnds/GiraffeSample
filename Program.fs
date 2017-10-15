@@ -51,16 +51,24 @@ let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
         return! text tweets next ctx
     }
 
+
+let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let! post =  ctx.BindJson<Twitter.Post>()
+        return! text (Twitter.postTweet post) next ctx
+    }
+
+
 let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     task {
         let std,err = Thumbnail.execute name feed
         return! text (sprintf "%s\n%s" std err) next ctx
     }
 
-let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
+
+let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
     task {
-        let! post =  ctx.BindJson<Twitter.Post>()
-        return! text (Twitter.postTweet post) next ctx
+        return! text (Gabai.getToken ()) next ctx
     }
 
 
@@ -86,6 +94,7 @@ let webApp =
         POST >=> route  "/tweets/post"    >=> handleTwitterPost
         GET  >=> routef "/tweets/feed/%s" (fun name -> (handleTwitterFeed name))
 
+        GET  >=> route  "/gab/login"           >=> handleGabLogin
         GET  >=> routef "/gab/thumbnail/%s/%s" (fun (name,post) -> (handleGabThumbnail name post))
         
         GET  >=> route  "/github/repos"         >=> handleGithub
