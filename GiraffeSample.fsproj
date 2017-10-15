@@ -39,10 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\*.fs" />
-<<<<<<< HEAD
-=======
     <Compile Include="Gabai.fs" />
->>>>>>> dev
     <Compile Include="Json.fs" />
     <Compile Include="LunchTypes.fs" />
     <Compile Include="DataAccess.fs" />
