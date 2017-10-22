@@ -19,9 +19,10 @@ open DataAccess
 
 
 module Thumbnail =
+    open DataAccess.GabaiAccess
 
     let execute name post =
-        let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s WebRoot/img/%s-%s.png" name post name post
+        let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s ~/projects/GiraffeSampleApp/WebRoot/img/%s-%s.png" name post name post
         use proc = new System.Diagnostics.Process()
 
         proc.StartInfo.FileName <- "/bin/bash"
@@ -30,20 +31,24 @@ module Thumbnail =
         proc.StartInfo.RedirectStandardOutput <- true
         proc.StartInfo.RedirectStandardError <- true
         proc.Start() |> ignore
-
-        let std = proc.StandardOutput.ReadToEnd()
-        let err = proc.StandardError.ReadToEnd()
-
+   
         proc.WaitForExit()
-
-        std, err
-
+        proc.StandardOutput.ReadToEnd(), proc.StandardError.ReadToEnd()
 
 
-    let executeFromDatabase () =
+
+    let executeThumbnailFromDb () =
         "thumbnail_created_at is null"
-        |> GabaiAccess.selectFromGab    
-
+        |> GabaiAccess.selectFromGab   
+        |> List.iter (fun p -> 
+            try
+                (execute p.ActuserName p.PostId) |> ignore
+                let filePath = sprintf "%s/projects/GiraffeSampleApp/WebRoot/img/%s-%s.png" (Environment.GetEnvironmentVariable("HOME")) p.ActuserName p.PostId
+                if IO.File.Exists(filePath)  then
+                    updatePost p updateCmdThumbnail
+                else printfn "%s does not exist, %s, %s" filePath p.ActuserName p.PostId
+            with _ as e -> printfn "%s" e.Message)
+        ""
 
  
 

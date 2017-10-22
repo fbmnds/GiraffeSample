@@ -90,6 +90,12 @@ let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+let handleGabThumbnailDb (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Gabai.Thumbnail.executeThumbnailFromDb ()) next ctx
+    }
+
+
 let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
     task {
         return! text (Gabai.Api.getToken ()) next ctx
@@ -148,6 +154,7 @@ let webApp =
         GET  >=> routef "/tweets/feed/%s" (fun name -> (handleTwitterFeed name))
 
         GET  >=> route  "/gab/login"                 >=> handleGabLogin
+        GET  >=> route  "/gab/thumbnail/db"          >=> handleGabThumbnailDb
         GET  >=> routef "/gab/thumbnail/%s/%s"       (fun (name,post) -> (handleGabThumbnail name post))
         GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
         GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
