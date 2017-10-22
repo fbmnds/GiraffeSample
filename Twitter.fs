@@ -3,10 +3,24 @@ module Twitter
 open System
 open System.IO
 open System.Net
-open System.Security.Cryptography
+
 open System.Text
 
-open Newtonsoft.Json.Linq
+open Secrets
+open Json
+
+
+// ---------------------------------
+// Twitter API
+// ---------------------------------
+
+let requestTokenURI      = "https://api.twitter.com/oauth/request_token"
+let accessTokenURI       = "https://api.twitter.com/oauth/access_token"
+let authorizeURI         = "https://api.twitter.com/oauth/authorize"
+let verifyCredentialsURI = "https://api.twitter.com/1.1/account/verify_credentials.json"
+let searchURI            = "https://api.twitter.com/1.1/statuses/user_timeline.json" 
+let homeTimelineURI      = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+let statusURI            = "https://api.twitter.com/1.1/statuses/update.json"
 
 
 //[<DataContract(Name="repo")>]
@@ -26,74 +40,6 @@ type Post =
         fail_dm_commands      : Option<bool> 
     }
 
-type Secret = 
-    { 
-        consumerKey       : string
-        consumerSecret    : string
-        accessToken       : string
-        accessTokenSecret : string 
-    }
-
-let secret : Secret =
-    let s = 
-        let home = Environment.GetEnvironmentVariable("HOME")
-        if home.Contains(@":\") then home + @"\.ssh\secret.json" else home + @"/.ssh/secret.json"
-        |> File.ReadAllText
-        |> JObject.Parse
-    { 
-        consumerKey       = s.Item("consumerKey").ToString()
-        consumerSecret    = s.Item("consumerSecret").ToString()
-        accessToken       = s.Item("accessToken").ToString()
-        accessTokenSecret = s.Item("accessTokenSecret").ToString()
-    }
-
-let requestTokenURI      = "https://api.twitter.com/oauth/request_token"
-let accessTokenURI       = "https://api.twitter.com/oauth/access_token"
-let authorizeURI         = "https://api.twitter.com/oauth/authorize"
-let verifyCredentialsURI = "https://api.twitter.com/1.1/account/verify_credentials.json"
-let searchURI            = "https://api.twitter.com/1.1/statuses/user_timeline.json" 
-let homeTimelineURI      = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-let statusURI            = "https://api.twitter.com/1.1/statuses/update.json"
-
-// Utilities
-
-let unreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
-let urlEncode str =
-    String.init (String.length str) (fun i ->
-        let symbol = str.[i]
-        if unreservedChars.IndexOf(symbol) = -1 then
-            "%" + String.Format("{0:X2}", int symbol)
-        else
-            string symbol)
-
-// Core Algorithms
-let hmacsha1 signingKey str =
-    use converter = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey : string))
-    Encoding.ASCII.GetBytes(str : string)
-    |> converter.ComputeHash
-    |> Convert.ToBase64String
-
-let compositeSigningKey consumerSecret tokenSecret =
-    urlEncode(consumerSecret) + "&" + urlEncode(tokenSecret)
-
-let baseString httpMethod baseUri queryParameters =
-    queryParameters
-    |> Seq.sortBy (fun (k,_) -> k)
-    |> Seq.map (fun (k,v) -> urlEncode(k) + "%3D" + urlEncode(v))
-    |> String.concat "%26"
-    |> sprintf "%s&%s&%s" httpMethod (urlEncode(baseUri))
-
-let createAuthorizeHeader queryParameters =
-    queryParameters
-    |> Seq.map (fun (k,v) -> urlEncode(k)+"\x3D\""+urlEncode(v)+"\"")
-    |> String.concat ","
-    |> sprintf "OAuth %s"
-
-let currentUnixTime() =
-    (DateTime.UtcNow - DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalSeconds
-    |> floor
-    |> int64
-    |> sprintf "%d"
 
 let oauthParameters consumerKey accessToken =
     [
@@ -153,6 +99,7 @@ let accessToken token tokenSecret verifier =
     (parts.[0].Split('=').[1],
      parts.[1].Split('=').[1])
 
+
 /// Compute the 'Authorization' header for the given request data
 let authHeaderAfterAuthenticated url httpMethod token tokenSecret queryParameters =
     let signingKey             = compositeSigningKey secret.consumerSecret tokenSecret
@@ -198,7 +145,6 @@ let getTweet ((oauth_token', oauth_token_secret'), pin) =
     strm.ReadToEnd()
 
 // let parms = captureOAuth();;
-
 // getTweet (parms, "0824995");;
 
 

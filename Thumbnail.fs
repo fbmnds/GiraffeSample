@@ -1,8 +1,8 @@
-﻿module Thumbnail
+﻿module Gabai.Thumbnail
 
 
 let execute name post =
-    let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s WebRoot/%s.png" name post post
+    let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s WebRoot/img/%s-%s.png" name post name post
     use proc = new System.Diagnostics.Process()
 
     proc.StartInfo.FileName <- "/bin/bash"
