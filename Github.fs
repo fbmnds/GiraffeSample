@@ -7,6 +7,13 @@ open System.Runtime.Serialization
 open System.Threading.Tasks
 
 
+// ---------------------------------
+// Github API
+// ---------------------------------
+
+let apiUrl = "https://api.github.com/orgs/dotnet/repos"
+
+
 [<DataContract>]
 [<CLIMutable>]
 type Repository =  
@@ -22,8 +29,6 @@ type Repository =
 
 type RepositoryArray = Repository array
 
-
-let apiUrl = "https://api.github.com/orgs/dotnet/repos"
     
 let processRepositories () =
     use client = new HttpClient()
@@ -49,6 +54,6 @@ let printRepos =
         Console.WriteLine()
         Console.ReadLine() |> ignore
 
-let offlineRepositories () = "repos.json" |> IO.File.ReadAllText
+let offlineRepositories () = "samples/repos.json" |> IO.File.ReadAllText
 
 

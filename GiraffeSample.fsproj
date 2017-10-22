@@ -38,11 +38,13 @@
     <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\*.fs" />
-    <Compile Include="Gabai.fs" />
     <Compile Include="Json.fs" />
+    <Compile Include="Secrets.fs" />
     <Compile Include="LunchTypes.fs" />
+    <Compile Include="GabaiTypes.fs" /> 
     <Compile Include="DataAccess.fs" />
+    <Compile Include="Models\*.fs" />   
+    <Compile Include="Gabai.fs" />
     <Compile Include="Thumbnail.fs" />
     <Compile Include="Twitter.fs" />
     <Compile Include="Github.fs" />

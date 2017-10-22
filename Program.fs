@@ -21,8 +21,18 @@ open Giraffe.HttpContextExtensions
 
 open Newtonsoft.Json.Linq
 
+open Secrets
 open LunchTypes
 open DataAccess
+
+
+
+// ---------------------------------
+// Global path setting
+// ---------------------------------
+
+let contentRoot = Directory.GetCurrentDirectory()
+let webRoot     = Path.Combine(contentRoot, "WebRoot")
 
 
 // ---------------------------------
@@ -75,22 +85,27 @@ let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
 
 let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     task {
-        let std,err = Thumbnail.execute name feed
+        let std,err = Gabai.Thumbnail.execute name feed
         return! text (sprintf "%s\n%s" std err) next ctx
     }
 
 
 let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Gabai.getToken ()) next ctx
+        return! text (Gabai.Api.getToken ()) next ctx
     }
 
 
 let handleGabFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Gabai.getFeed name) next ctx
+        return! text (Gabai.Api.getFeed name) next ctx
     }
 
+
+let handleGabOfflineTweetFeed name (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Gabai.Api.offlineTweetFeed name) next ctx
+    }
 
 // ---------------------------------
 // Github
@@ -117,10 +132,11 @@ let webApp =
         POST >=> route  "/tweets/post"    >=> handleTwitterPost
         GET  >=> routef "/tweets/feed/%s" (fun name -> (handleTwitterFeed name))
 
-        GET  >=> route  "/gab/login"           >=> handleGabLogin
-        GET  >=> routef "/gab/thumbnail/%s/%s" (fun (name,post) -> (handleGabThumbnail name post))
-        GET  >=> routef "/gab/feed/%s"         (fun name -> (handleGabFeed name))
-        
+        GET  >=> route  "/gab/login"                 >=> handleGabLogin
+        GET  >=> routef "/gab/thumbnail/%s/%s"       (fun (name,post) -> (handleGabThumbnail name post))
+        GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
+        GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
+
         GET  >=> route  "/github/repos"         >=> handleGithub
         GET  >=> route  "/github/offline/repos" >=> handleGithubOffline
 
@@ -166,13 +182,11 @@ let configureLogging (builder : ILoggingBuilder) =
 [<EntryPoint>]
 [<RequireHttps>]
 let main argv =
-    let contentRoot = Directory.GetCurrentDirectory()
-    let webRoot     = Path.Combine(contentRoot, "WebRoot")
-    let pfxFile     = Path.Combine(contentRoot, "GiraffeSample.pfx")
-    let certificate = new X509Certificate2(pfxFile, "GiraffeSample")
+    let pfxFile     = Environment.GetEnvironmentVariable("SECRETS") + @"/GiraffeSample.pfx"
+    let certificate = new X509Certificate2(pfxFile, secret.giraffeSamplePfx)
     WebHostBuilder()
         .UseKestrel(fun options -> 
-            options.Listen(IPAddress.Any, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, "GiraffeSample") |> ignore)))
+            options.Listen(IPAddress.Any, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, secret.giraffeSamplePfx) |> ignore)))
         .UseIISIntegration()
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
