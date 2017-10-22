@@ -45,7 +45,6 @@
     <Compile Include="DataAccess.fs" />
     <Compile Include="Models\*.fs" />   
     <Compile Include="Gabai.fs" />
-    <Compile Include="Thumbnail.fs" />
     <Compile Include="Twitter.fs" />
     <Compile Include="Github.fs" />
     <Compile Include="Program.fs" />

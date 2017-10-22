@@ -107,6 +107,21 @@ let handleGabOfflineTweetFeed name (next: HttpFunc) (ctx: HttpContext) =
         return! text (Gabai.Api.offlineTweetFeed name) next ctx
     }
 
+let handleGabSelectFor clause (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let result =
+            if clause = "thumbnails" then 
+                "thumbnail_created_at is null"
+                |> GabaiAccess.selectFromGab
+                |> List.fold (fun s p -> sprintf "%s\n%s, %s" s p.ActuserName p.PostId) ""
+            else
+                "tweeted_at is null"
+                |> GabaiAccess.selectFromGab
+                |> List.fold (fun s p -> sprintf "%s\n%s, %s" s p.ActuserName p.PostId) ""
+        return! text result next ctx
+    }
+
+
 // ---------------------------------
 // Github
 // ---------------------------------
@@ -136,6 +151,8 @@ let webApp =
         GET  >=> routef "/gab/thumbnail/%s/%s"       (fun (name,post) -> (handleGabThumbnail name post))
         GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
         GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
+        GET  >=> routef "/gab/db/select/for/%s"      (fun clause -> (handleGabSelectFor clause))
+
 
         GET  >=> route  "/github/repos"         >=> handleGithub
         GET  >=> route  "/github/offline/repos" >=> handleGithubOffline
