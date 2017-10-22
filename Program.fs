@@ -24,6 +24,11 @@ open Newtonsoft.Json.Linq
 open LunchTypes
 open DataAccess
 
+
+// ---------------------------------
+// Data access example 'lunch'
+// ---------------------------------
+
 let handleLunchFilter (next: HttpFunc) (ctx: HttpContext) =
     let filter = ctx.BindQueryString<LunchFilter>()
     let lunchSpots = LunchAccess.getLunches filter
@@ -44,6 +49,11 @@ let handleDelLunch (next: HttpFunc) (ctx: HttpContext) =
         return! text (sprintf "Deleted %A from lunch spots." lunch.ID) next ctx
     }
 
+
+// ---------------------------------
+// Twitter
+// ---------------------------------
+
 let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
         let twitter = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))] |> JObject.Parse
@@ -59,6 +69,10 @@ let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+// ---------------------------------
+// Gab.ai
+// ---------------------------------
+
 let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     task {
         let std,err = Thumbnail.execute name feed
@@ -72,6 +86,16 @@ let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+let handleGabFeed name (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Gabai.getFeed name) next ctx
+    }
+
+
+// ---------------------------------
+// Github
+// ---------------------------------
+
 let handleGithub (next: HttpFunc) (ctx: HttpContext) =
     task {
         let repos,_ = Github.processRepositories()
@@ -82,7 +106,6 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
     task {
         return! text (Github.offlineRepositories()) next ctx
     }
-
 
 
 // ---------------------------------
@@ -96,6 +119,7 @@ let webApp =
 
         GET  >=> route  "/gab/login"           >=> handleGabLogin
         GET  >=> routef "/gab/thumbnail/%s/%s" (fun (name,post) -> (handleGabThumbnail name post))
+        GET  >=> routef "/gab/feed/%s"         (fun name -> (handleGabFeed name))
         
         GET  >=> route  "/github/repos"         >=> handleGithub
         GET  >=> route  "/github/offline/repos" >=> handleGithubOffline
