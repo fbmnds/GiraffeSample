@@ -24,6 +24,11 @@ open Newtonsoft.Json.Linq
 open LunchTypes
 open DataAccess
 
+
+// ---------------------------------
+// Data access example 'lunch'
+// ---------------------------------
+
 let handleLunchFilter (next: HttpFunc) (ctx: HttpContext) =
     let filter = ctx.BindQueryString<LunchFilter>()
     let lunchSpots = LunchAccess.getLunches filter
@@ -44,6 +49,11 @@ let handleDelLunch (next: HttpFunc) (ctx: HttpContext) =
         return! text (sprintf "Deleted %A from lunch spots." lunch.ID) next ctx
     }
 
+
+// ---------------------------------
+// Twitter
+// ---------------------------------
+
 let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
         let twitter = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))] |> JObject.Parse
@@ -51,14 +61,6 @@ let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
         return! text tweets next ctx
     }
 
-<<<<<<< HEAD
-let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
-    task {
-        let std,err = Thumbnail.execute name feed
-        return! text (sprintf "%s\n%s" std err) next ctx
-    }
-=======
->>>>>>> dev
 
 let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
     task {
@@ -66,6 +68,10 @@ let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
         return! text (Twitter.postTweet post) next ctx
     }
 
+
+// ---------------------------------
+// Gab.ai
+// ---------------------------------
 
 let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     task {
@@ -80,6 +86,16 @@ let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+let handleGabFeed name (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Gabai.getFeed name) next ctx
+    }
+
+
+// ---------------------------------
+// Github
+// ---------------------------------
+
 let handleGithub (next: HttpFunc) (ctx: HttpContext) =
     task {
         let repos,_ = Github.processRepositories()
@@ -92,7 +108,6 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
-
 // ---------------------------------
 // Web app
 // ---------------------------------
@@ -102,11 +117,9 @@ let webApp =
         POST >=> route  "/tweets/post"    >=> handleTwitterPost
         GET  >=> routef "/tweets/feed/%s" (fun name -> (handleTwitterFeed name))
 
-<<<<<<< HEAD
-=======
         GET  >=> route  "/gab/login"           >=> handleGabLogin
->>>>>>> dev
         GET  >=> routef "/gab/thumbnail/%s/%s" (fun (name,post) -> (handleGabThumbnail name post))
+        GET  >=> routef "/gab/feed/%s"         (fun name -> (handleGabFeed name))
         
         GET  >=> route  "/github/repos"         >=> handleGithub
         GET  >=> route  "/github/offline/repos" >=> handleGithubOffline
