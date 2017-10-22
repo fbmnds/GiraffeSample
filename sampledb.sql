@@ -11,7 +11,9 @@ CREATE TABLE gab (
 	actuser_name TEXT NOT NULL, 
 	post_id TEXT NOT NULL, 
 	post_body TEXT NOT NULL, 
-	post_created_at TEXT NOT NULL
+	post_created_at TEXT NOT NULL,
+  thumbnail_created_at TEXT,
+  tweeted_at TEXT
 );
 CREATE UNIQUE INDEX idx_posts on gab (actuser_name, post_id);
 /* No STAT tables available */

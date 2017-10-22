@@ -11,11 +11,52 @@ open Json
 open GabaiTypes
 open DataAccess
 
-module Api =
+
+
+// ---------------------------------
+// Gab.ai thumbnails
+// ---------------------------------
+
+
+module Thumbnail =
+    open DataAccess.GabaiAccess
+
+    let execute name post =
+        let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s ~/projects/GiraffeSampleApp/WebRoot/img/%s-%s.png" name post name post
+        use proc = new System.Diagnostics.Process()
+
+        proc.StartInfo.FileName <- "/bin/bash"
+        proc.StartInfo.Arguments <- "-c \" " + command + " \""
+        proc.StartInfo.UseShellExecute <- false
+        proc.StartInfo.RedirectStandardOutput <- true
+        proc.StartInfo.RedirectStandardError <- true
+        proc.Start() |> ignore
+   
+        proc.WaitForExit()
+        proc.StandardOutput.ReadToEnd(), proc.StandardError.ReadToEnd()
+
+
+
+    let executeThumbnailFromDb () =
+        "thumbnail_created_at is null"
+        |> GabaiAccess.selectFromGab   
+        |> List.iter (fun p -> 
+            try
+                (execute p.ActuserName p.PostId) |> ignore
+                let filePath = sprintf "%s/projects/GiraffeSampleApp/WebRoot/img/%s-%s.png" (Environment.GetEnvironmentVariable("HOME")) p.ActuserName p.PostId
+                if IO.File.Exists(filePath)  then
+                    updatePost p updateCmdThumbnail
+                else printfn "%s does not exist, %s, %s" filePath p.ActuserName p.PostId
+            with _ as e -> printfn "%s" e.Message)
+        ""
+
+ 
 
 // ---------------------------------
 // Gab.ai API
 // ---------------------------------
+
+module Api =
 
     let loginUri = "https://gab.ai/auth/login"
     let feedUri name = sprintf "https://gab.ai/feed/%s" name
@@ -146,7 +187,7 @@ module Api =
             |> Seq.map (fun d -> 
                 let p = PostRecord ()
                 p.ActuserName   <- d.Item("actuser").Item("username").ToString() 
-                p.PostId        <- d.Item("id").ToString()
+                p.PostId        <- d.Item("post").Item("id").ToString()
                 p.PostBody      <- d.Item("post").Item("body").ToString()
                 p.PostCreatedAt <- d.Item("post").Item("created_at").ToString()
                 p)
