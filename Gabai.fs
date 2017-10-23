@@ -7,7 +7,7 @@ open System.IO.Compression
 
 open Newtonsoft.Json.Linq
 
-open Json
+open Secrets
 open GabaiTypes
 open DataAccess
 
@@ -22,7 +22,7 @@ module Thumbnail =
     open DataAccess.GabaiAccess
 
     let execute name post =
-        let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s ~/projects/GiraffeSampleApp/WebRoot/img/%s-%s.png" name post name post
+        let command = sprintf "QT_QPA_PLATFORM=offscreen phantomjs thumbnail.js https://gab.ai/%s/posts/%s %s/img/%s-%s.png" name post Globals.WebRoot name post
         use proc = new System.Diagnostics.Process()
 
         proc.StartInfo.FileName <- "/bin/bash"
@@ -52,11 +52,11 @@ module Thumbnail =
 
  
 
-// ---------------------------------
-// Gab.ai API
-// ---------------------------------
-
 module Api =
+    
+    // ---------------------------------
+    // Gab.ai API
+    // ---------------------------------
 
     let loginUri = "https://gab.ai/auth/login"
     let feedUri name = sprintf "https://gab.ai/feed/%s" name
@@ -65,19 +65,9 @@ module Api =
     let pattern  = """<input type="hidden" name="_token" value="""
     let position = 5
 
-
-    let gabUsername, gabPassword, gabJwtHeader, gabJwtPayload, gabJwtSignature =
-        let s = 
-            let home = Environment.GetEnvironmentVariable("HOME")
-            if home.Contains(@":\") then home + @"\.ssh\secret.json" else home + @"/.ssh/secret.json"
-            |> File.ReadAllText
-            |> JObject.Parse
-        s.Item("gabUsername").ToString(), 
-        s.Item("gabPassword").ToString(),
-        s.Item("gabJwtHeader").ToString(),
-        s.Item("gabJwtPayload").ToString(),
-        s.Item("gabJwtSignature").ToString()
-
+    // ---------------------------------
+    // Gab.ai functions
+    // ---------------------------------
 
     let deleteLines linesToRemove (text : string) = 
         text.Split(Environment.NewLine.ToCharArray(), linesToRemove + 1)
@@ -99,9 +89,9 @@ module Api =
         let token = getToken ()
         //let req  = HttpWebRequest.Create("http://192.168.0.39", Method="POST")
         let req  = WebRequest.Create(loginUri, Method="POST") 
-        let data = sprintf "_token=%s&username=%s&password=%s&remember=on" token gabUsername (gabPassword |> urlEncode) 
+        let data = sprintf "_token=%s&username=%s&password=%s&remember=on" token secret.gabUsername (secret.gabPassword |> Utils.urlEncode) 
         req.Headers.Clear()
-        req.Headers.Set("User-Agent", "phpGab/1.0")
+        req.Headers.Set("User-Agent", Globals.UserAgent)
         req.Headers.Set("Accept", "*/*")
         req.Headers.Set("Connection", "close")
         req.Headers.Set("Cookie", "foo=bar")
@@ -126,7 +116,7 @@ module Api =
         try
             let req  = HttpWebRequest.Create((feedUri user), Method="GET")
             req.Headers.Clear()
-            req.Headers.Set("User-Agent", "phpGab/1.0")
+            req.Headers.Set("User-Agent", Globals.UserAgent)
             req.Headers.Set("Accept", "*/*")
             req.Headers.Set("Connection", "close")
             req.Headers.Set("Cookie", rememberCookie)
@@ -159,22 +149,39 @@ module Api =
         try
             let req  = HttpWebRequest.Create((feedUri user), Method="GET")
             req.Headers.Clear()
-            req.Headers.Set("User-Agent", "phpGab/1.0")
+            req.Headers.Set("User-Agent", Globals.UserAgent)
             req.Headers.Set("Accept", "application/json")
-            req.Headers.Set("Authorization", (sprintf "Bearer %s.%s.%s" gabJwtHeader gabJwtPayload gabJwtSignature))
+            req.Headers.Set("Authorization", (sprintf "Bearer %s.%s.%s" secret.gabJwtHeader secret.gabJwtPayload secret.gabJwtSignature))
             req.Headers.Set("Cookie", rememberCookie)
             use resp = req.GetResponse()
             use strm = new StreamReader(resp.GetResponseStream())
-            sprintf "{ \"feed\": [%s] }" (strm.ReadToEnd())
+            strm.ReadToEnd()
         with 
         | :? WebException as e -> printfn "headers %A message %s status %A" e.Response.Headers e.Message e.Status; "{ \"feed\": [] }"
-        | _ as e -> printfn "%s" e.Message; "{ \"feed\": [] }"
+        | _ as e -> printfn "%s" e.Message; "{ \"data\": [] }"
 
 
     /// feed / data / actuser / username  -> actuser_name
     /// feed / data / id                  -> post_id
     /// feed / data / post / body         -> post_body
     /// feed / data / post / created_at   -> post_created_at
+    let insertFeed user = 
+        try
+            let feed = 
+                user
+                |> getFeed
+                |> JObject.Parse
+            feed.Item("data")
+            |> Seq.map (fun d -> 
+                let p = PostRecord ()
+                p.ActuserName   <- d.Item("actuser").Item("username").ToString() 
+                p.PostId        <- d.Item("post").Item("id").ToString()
+                p.PostBody      <- d.Item("post").Item("body").ToString()
+                p.PostCreatedAt <- d.Item("post").Item("created_at").ToString()
+                p)
+            |> GabaiAccess.addPostSeq
+            sprintf "%s feed: %d records written to database" user (feed.Item("data") |> Seq.length)
+        with _ as e -> e.Message
 
 
     let offlineTweetFeed _ =

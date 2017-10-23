@@ -21,43 +21,13 @@ open Giraffe.HttpContextExtensions
 
 open Newtonsoft.Json.Linq
 
+open Globals
 open Secrets
-open LunchTypes
 open DataAccess
 
 
 
-// ---------------------------------
-// Global path setting
-// ---------------------------------
 
-let contentRoot = Directory.GetCurrentDirectory()
-let webRoot     = Path.Combine(contentRoot, "WebRoot")
-
-
-// ---------------------------------
-// Data access example 'lunch'
-// ---------------------------------
-
-let handleLunchFilter (next: HttpFunc) (ctx: HttpContext) =
-    let filter = ctx.BindQueryString<LunchFilter>()
-    let lunchSpots = LunchAccess.getLunches filter
-    json lunchSpots next ctx
-
-
-let handleAddLunch (next: HttpFunc) (ctx: HttpContext) =
-    task {
-        let! lunch = ctx.BindJson<LunchSpot>()
-        LunchAccess.addLunch lunch
-        return! text (sprintf "Added %s to the lunch spots." lunch.Name) next ctx
-    }
-
-let handleDelLunch (next: HttpFunc) (ctx: HttpContext) =
-    task {
-        let! lunch = ctx.BindJson<LunchID>()
-        LunchAccess.delLunch lunch
-        return! text (sprintf "Deleted %A from lunch spots." lunch.ID) next ctx
-    }
 
 
 // ---------------------------------
@@ -120,10 +90,17 @@ let handleGabFeed name (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+let handleInsertGabFeed name (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Gabai.Api.insertFeed name) next ctx
+    }
+
+
 let handleGabOfflineTweetFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
         return! text (Gabai.Api.offlineTweetFeed name) next ctx
     }
+
 
 let handleGabSelectFor clause (next: HttpFunc) (ctx: HttpContext) =
     task {
@@ -171,16 +148,12 @@ let webApp =
         GET  >=> route  "/gab/thumbnail/db"          >=> handleGabThumbnailDb
         GET  >=> routef "/gab/thumbnail/%s/%s"       (fun (name,post) -> (handleGabThumbnail name post))
         GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
-        GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
+        GET  >=> routef "/gab/db/insert/feed/%s"     (fun name -> (handleInsertGabFeed name))
         GET  >=> routef "/gab/db/select/clause/%s"   (fun clause -> (handleGabSelectFor clause))
-
+        GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
 
         GET  >=> route  "/github/repos"              >=> handleGithub
         GET  >=> route  "/github/offline/repos"      >=> handleGithubOffline
-
-        GET  >=> route  "/lunch"                     >=> handleLunchFilter
-        POST >=> route  "/lunch/add"                 >=> handleAddLunch
-        POST >=> route  "/lunch/del"                 >=> handleDelLunch
 
         setStatusCode 404 >=> text "Not Found" 
     ]
@@ -226,7 +199,7 @@ let main argv =
         .UseKestrel(fun options -> 
             options.Listen(IPAddress.Any, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, secret.giraffeSamplePfx) |> ignore)))
         .UseIISIntegration()
-        .UseWebRoot(webRoot)
+        .UseWebRoot(Globals.WebRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)

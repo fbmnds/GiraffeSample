@@ -9,7 +9,7 @@ open System.Text
 open Newtonsoft.Json.Linq
 
 open Secrets
-open Json
+open Utils
 
 
 // ---------------------------------
@@ -301,7 +301,7 @@ let twurlMedia img =
 
 
 let uploadMedia ext =
-    let filePath = sprintf "%s/projects/GiraffeSampleApp/WebRoot/img/" (Environment.GetEnvironmentVariable("HOME"))
+    let filePath = sprintf "%s/img/" Globals.WebRoot
     Directory.GetFiles(filePath, (sprintf "*.%s" ext)) 
     |> Array.map twurlMedia
     |> Array.fold (fun s (std,err) -> 

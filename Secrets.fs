@@ -23,9 +23,9 @@ let secret : Secret =
     let s = 
         "secret.json"
         |> if Environment.OSVersion.ToString().Contains("Windows") then
-            sprintf "%s\\%s" (Environment.GetEnvironmentVariable("SECRETS"))
+            sprintf "%s\\%s" Globals.Secrets
            else
-            sprintf "%s/%s" (Environment.GetEnvironmentVariable("SECRETS"))
+            sprintf "%s/%s" Globals.Secrets
         |> File.ReadAllText
         |> JObject.Parse
     { 

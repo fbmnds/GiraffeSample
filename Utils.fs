@@ -1,4 +1,4 @@
-﻿module Json
+﻿module Utils
 
 open System
 open System.Text
