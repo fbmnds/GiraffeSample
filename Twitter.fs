@@ -6,6 +6,8 @@ open System.Net
 
 open System.Text
 
+open Newtonsoft.Json.Linq
+
 open Secrets
 open Json
 
@@ -39,6 +41,12 @@ type Post =
         enable_dm_commands    : Option<bool>
         fail_dm_commands      : Option<bool> 
     }
+
+
+type Media =
+    | Png
+    | Jpg
+    | Gif
 
 
 let oauthParameters consumerKey accessToken =
@@ -135,6 +143,20 @@ let captureOAuth() =
     // let oauth_token, oauth_token_secret = accessToken oauth_token'' oauth_token_secret'' ("3030558")
 
 
+let twurl command =
+    use proc = new System.Diagnostics.Process()
+
+    proc.StartInfo.FileName <- "/bin/bash"
+    proc.StartInfo.Arguments <- "-c \" " + command + " \""
+    proc.StartInfo.UseShellExecute <- false
+    proc.StartInfo.RedirectStandardOutput <- true
+    proc.StartInfo.RedirectStandardError <- true
+    proc.Start() |> ignore
+   
+    proc.WaitForExit()
+    proc.StandardOutput.ReadToEnd(), proc.StandardError.ReadToEnd() 
+
+
 let getTweet ((oauth_token', oauth_token_secret'), pin) =
     let oauth_token, 
         oauth_token_secret = accessToken oauth_token' oauth_token_secret' pin
@@ -149,33 +171,51 @@ let getTweet ((oauth_token', oauth_token_secret'), pin) =
 
 
 let postTweet (tweet: Post) =
-  let tweet_ = 
-    if tweet.status = "" then 
-        sprintf "F# scripted tweet +++ %d #10m" (System.Random(10).Next()) |> urlEncode
-    else
-        tweet.status |> urlEncode
-  let tweetData           = System.Text.Encoding.ASCII.GetBytes("status="+tweet_)
-  let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
-  let signingString       = baseString "POST" statusURI ([("status",tweet_)] @ queryParameters)
-  let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
-  let oauth_signature     = hmacsha1 signingKey signingString
-  let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
-  System.Net.ServicePointManager.Expect100Continue <- false
-  let req = WebRequest.Create(statusURI)
-  //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
-  req.Headers.Add("Authorization",AuthorizationHeader)
-  req.Method        <- "POST"
-  req.ContentType   <- "application/x-www-form-urlencoded"
-  req.ContentLength <- (int64) tweetData.Length
-  use wstream = req.GetRequestStream() 
-  wstream.Write(tweetData,0, (tweetData.Length))
-  wstream.Flush()
-  wstream.Close()
-  req.Timeout <- 3 * 60 * 1000
-  use resp = req.GetResponse()
-  use strm = new StreamReader(resp.GetResponseStream())
-  strm.ReadToEnd()
+    let tweet_ = 
+        if tweet.status = "" then 
+            sprintf "F# scripted tweet +++ %d #10m" (System.Random(10).Next()) |> urlEncode
+        else
+            tweet.status |> urlEncode
+    let tweetData           = System.Text.Encoding.ASCII.GetBytes("status="+tweet_)
+    let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
+    let signingString       = baseString "POST" statusURI ([("status",tweet_)] @ queryParameters)
+    let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
+    let oauth_signature     = hmacsha1 signingKey signingString
+    let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
+    System.Net.ServicePointManager.Expect100Continue <- false
+    let req = WebRequest.Create(statusURI)
+    //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
+    req.Headers.Add("Authorization",AuthorizationHeader)
+    req.Method        <- "POST"
+    req.ContentType   <- "application/x-www-form-urlencoded"
+    req.ContentLength <- (int64) tweetData.Length
+    use wstream = req.GetRequestStream() 
+    wstream.Write(tweetData,0, (tweetData.Length))
+    wstream.Flush()
+    wstream.Close()
+    req.Timeout <- 3 * 60 * 1000
+    use resp = req.GetResponse()
+    use strm = new StreamReader(resp.GetResponseStream())
+    strm.ReadToEnd()
 
+
+let postOfflineTweets () =
+    try
+        let feed = 
+            "samples/tweet-upload-2.json" 
+            |> File.ReadAllText
+            |> JObject.Parse
+        feed.Item("upload")
+        |> Seq.map (fun d ->   
+            let status    = sprintf "status=%s" (d.Item("status").ToString()) |> urlEncode
+            let media_ids = sprintf "media_ids=%s" (d.Item("media_ids").ToString())
+            sprintf "twurl /1.1/statuses/update.json -d \"%s\" -d \"%s\"" status media_ids
+            |> twurl) 
+        |> Seq.map (fun (std,err) ->
+            sprintf "{ \"posted_at\":\"%s\", \"std\":%s, \"err\": \"%s\" }" (DateTime.UtcNow.ToString()) std err)
+        |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+        |> sprintf "{ \"uploaded\": [\n%s\n] }"
+    with _ as e -> e.Message
 
 
 let verifyCredentials () =
@@ -252,3 +292,21 @@ let getAllTweets (q: string) =
     getRestTweets q (getMinId f) [f.Value]
 *)
 // getAllTweets "@fbmnds";;
+
+
+let twurlMedia img =
+    img
+    |> sprintf "twurl -H upload.twitter.com -X POST \"/1.1/media/upload.json\" --file \"%s\" --file-field \"media\""
+    |> twurl
+
+
+let uploadMedia ext =
+    let filePath = sprintf "%s/projects/GiraffeSampleApp/WebRoot/img/" (Environment.GetEnvironmentVariable("HOME"))
+    Directory.GetFiles(filePath, (sprintf "*.%s" ext)) 
+    |> Array.map twurlMedia
+    |> Array.fold (fun s (std,err) -> 
+        if s = "" then
+            sprintf "{\"std\": %s, \"err\":\"%s\" }" (std.Replace(Environment.NewLine, "")) (err.Replace(Environment.NewLine, ""))
+        else
+            sprintf "%s,\n{\"std\": %s, \"err\":\"%s\" }" s (std.Replace(Environment.NewLine, "")) (err.Replace(Environment.NewLine, ""))) ""
+    |> sprintf "{ \"upload\" : [\n%s\n] }" 

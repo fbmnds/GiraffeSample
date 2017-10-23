@@ -72,10 +72,22 @@ let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+let handleTwitterImgUpload (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Twitter.uploadMedia "png") next ctx
+    }
+
+
 let handleTwitterPost (next: HttpFunc) (ctx: HttpContext) =
     task {
         let! post =  ctx.BindJson<Twitter.Post>()
         return! text (Twitter.postTweet post) next ctx
+    }
+
+
+let handleTwitterOfflinePost (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Twitter.postOfflineTweets ()) next ctx
     }
 
 
@@ -150,23 +162,25 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [
-        POST >=> route  "/tweets/post"    >=> handleTwitterPost
-        GET  >=> routef "/tweets/feed/%s" (fun name -> (handleTwitterFeed name))
+        POST >=> route  "/tweets/post"               >=> handleTwitterPost
+        GET  >=> route  "/tweets/offline/post"       >=> handleTwitterOfflinePost
+        GET  >=> routef "/tweets/feed/%s"            (fun name -> (handleTwitterFeed name))
+        GET  >=> route  "/tweets/img/upload"         >=> handleTwitterImgUpload
 
         GET  >=> route  "/gab/login"                 >=> handleGabLogin
         GET  >=> route  "/gab/thumbnail/db"          >=> handleGabThumbnailDb
         GET  >=> routef "/gab/thumbnail/%s/%s"       (fun (name,post) -> (handleGabThumbnail name post))
         GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
         GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
-        GET  >=> routef "/gab/db/select/for/%s"      (fun clause -> (handleGabSelectFor clause))
+        GET  >=> routef "/gab/db/select/clause/%s"   (fun clause -> (handleGabSelectFor clause))
 
 
-        GET  >=> route  "/github/repos"         >=> handleGithub
-        GET  >=> route  "/github/offline/repos" >=> handleGithubOffline
+        GET  >=> route  "/github/repos"              >=> handleGithub
+        GET  >=> route  "/github/offline/repos"      >=> handleGithubOffline
 
-        GET  >=> route  "/lunch"     >=> handleLunchFilter
-        POST >=> route  "/lunch/add" >=> handleAddLunch
-        POST >=> route  "/lunch/del" >=> handleDelLunch
+        GET  >=> route  "/lunch"                     >=> handleLunchFilter
+        POST >=> route  "/lunch/add"                 >=> handleAddLunch
+        POST >=> route  "/lunch/del"                 >=> handleDelLunch
 
         setStatusCode 404 >=> text "Not Found" 
     ]
