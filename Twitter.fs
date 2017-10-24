@@ -9,7 +9,9 @@ open System.Text
 open Newtonsoft.Json.Linq
 
 open Secrets
-open Json
+open Utils
+open GabaiTypes
+open DataAccess.GabaiAccess
 
 
 // ---------------------------------
@@ -41,12 +43,6 @@ type Post =
         enable_dm_commands    : Option<bool>
         fail_dm_commands      : Option<bool> 
     }
-
-
-type Media =
-    | Png
-    | Jpg
-    | Gif
 
 
 let oauthParameters consumerKey accessToken =
@@ -143,19 +139,6 @@ let captureOAuth() =
     // let oauth_token, oauth_token_secret = accessToken oauth_token'' oauth_token_secret'' ("3030558")
 
 
-let twurl command =
-    use proc = new System.Diagnostics.Process()
-
-    proc.StartInfo.FileName <- "/bin/bash"
-    proc.StartInfo.Arguments <- "-c \" " + command + " \""
-    proc.StartInfo.UseShellExecute <- false
-    proc.StartInfo.RedirectStandardOutput <- true
-    proc.StartInfo.RedirectStandardError <- true
-    proc.Start() |> ignore
-   
-    proc.WaitForExit()
-    proc.StandardOutput.ReadToEnd(), proc.StandardError.ReadToEnd() 
-
 
 let getTweet ((oauth_token', oauth_token_secret'), pin) =
     let oauth_token, 
@@ -184,7 +167,6 @@ let postTweet (tweet: Post) =
     let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
     System.Net.ServicePointManager.Expect100Continue <- false
     let req = WebRequest.Create(statusURI)
-    //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
     req.Headers.Add("Authorization",AuthorizationHeader)
     req.Method        <- "POST"
     req.ContentType   <- "application/x-www-form-urlencoded"
@@ -197,25 +179,6 @@ let postTweet (tweet: Post) =
     use resp = req.GetResponse()
     use strm = new StreamReader(resp.GetResponseStream())
     strm.ReadToEnd()
-
-
-let postOfflineTweets () =
-    try
-        let feed = 
-            "samples/tweet-upload-2.json" 
-            |> File.ReadAllText
-            |> JObject.Parse
-        feed.Item("upload")
-        |> Seq.map (fun d ->   
-            let status    = sprintf "status=%s" (d.Item("status").ToString()) |> urlEncode
-            let media_ids = sprintf "media_ids=%s" (d.Item("media_ids").ToString())
-            sprintf "twurl /1.1/statuses/update.json -d \"%s\" -d \"%s\"" status media_ids
-            |> twurl) 
-        |> Seq.map (fun (std,err) ->
-            sprintf "{ \"posted_at\":\"%s\", \"std\":%s, \"err\": \"%s\" }" (DateTime.UtcNow.ToString()) std err)
-        |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
-        |> sprintf "{ \"uploaded\": [\n%s\n] }"
-    with _ as e -> e.Message
 
 
 let verifyCredentials () =
@@ -251,62 +214,94 @@ let searchTweets searchParams =
       use resp = req.GetResponse()
       use strm = new StreamReader(resp.GetResponseStream())
       strm.ReadToEnd()
-      |> sprintf "{\"tweets\":%s}" 
-    with
-    | _ -> "{\"tweets\":[]}"
+      |> sprintf """{ "tweets" : %s }""" 
+    with _ -> """{ "tweets" : [] }"""
 
   // searchTweets [("screen_name","@fbmnds")];;
 
-(*
 
-let getMinId (searchResult: string option) : string option =
-    let getMinId_ (sR: string option) = 
-        try 
-            let r = (JsonValue.Parse sR.Value)
-            let s = seq { for i in r.GetProperty("statuses") do yield (i?id) }
-            s
-            |> Seq.min
-            |> string
-            |> Some
-        with 
-        | _ -> None 
-    match searchResult with 
-    | Some searchresult -> getMinId_ searchResult
-    | _ -> None
-
-
-let getAllTweets (q: string) = 
-    let nextTweets q (min_id: string option) : string option = 
-        match min_id with 
-        | Some min_id -> ([("screen_name",q); ("max_id",min_id)] |> searchTweets)
-        | _ -> None
-    let rec getRestTweets q minId acc =
-        System.Threading.Thread.Sleep(3000)
-        let n = nextTweets q minId
-        printfn "minId = %A n = %A" minId n
-        match n, acc with 
-        | None, _ -> acc
-        | _, head :: tail when n.Value = head -> acc
-        | _, _ -> getRestTweets q (getMinId n) (n.Value :: acc)
-    let f = searchTweets [("screen_name",q)]
-    getRestTweets q (getMinId f) [f.Value]
-*)
-// getAllTweets "@fbmnds";;
+let twurlMedia actuser_name post_id =
+    try
+        let result = 
+            sprintf "%s/img/%s-%s.png" Globals.WebRoot actuser_name post_id
+            |> sprintf "twurl -H upload.twitter.com -X POST \"/1.1/media/upload.json\" --file \"%s\" --file-field \"media\""
+            |> Utils.execute
+        printfn "%s" result
+        result
+        |> JObject.Parse
+        |> fun d -> 
+            let p = PostRecord ()
+            p.ActuserName <- actuser_name 
+            p.PostId      <- post_id
+            p.MediaId     <- (d.Item("std").ToString() |> Utils.urlDecode |> JObject.Parse).Item("media_id").ToString()
+            p |> DataAccess.GabaiAccess.updateMedia       
+            (System.DateTime.Now.ToString())
+            |> sprintf """{ "actuser_name": "%s", "post_id": %s, "media_id": "%s", "uploaded_at": "%s" }""" p.ActuserName p.PostId p.MediaId
+    with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message 
 
 
-let twurlMedia img =
-    img
-    |> sprintf "twurl -H upload.twitter.com -X POST \"/1.1/media/upload.json\" --file \"%s\" --file-field \"media\""
-    |> twurl
+let uploadMedia () =
+    try
+        let filePath = sprintf "%s/img/" Globals.WebRoot
+        "thumbnail_created_at is not null AND media_id is null" 
+        |> DataAccess.GabaiAccess.selectFromGab
+        |> List.map (fun p -> twurlMedia p.ActuserName p.PostId)
+        |> List.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+        |> sprintf """{ "upload" : [%s] }"""
+    with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
+    
+
+//let x () =
+//    try
+//        let feed = 
+//            "samples/tweet-media.json" 
+//            |> File.ReadAllText
+//            |> JObject.Parse
+//        feed.Item("upload").Children()
+//        |> Seq.iter (fun d ->   
+//            let p = PostRecord ()
+//            p.ActuserName <- d.Item("actuser_name").ToString() 
+//            p.PostId      <- d.Item("post_id").ToString()
+//            p.MediaId     <- d.Item("media_id").ToString()
+//            DataAccess.GabaiAccess.updateMedia p) 
+//    with _ as e -> printfn """{ "error_msg": "%s" }""" e.Message
 
 
-let uploadMedia ext =
-    let filePath = sprintf "%s/projects/GiraffeSampleApp/WebRoot/img/" (Environment.GetEnvironmentVariable("HOME"))
-    Directory.GetFiles(filePath, (sprintf "*.%s" ext)) 
-    |> Array.map twurlMedia
-    |> Array.fold (fun s (std,err) -> 
-        if s = "" then
-            sprintf "{\"std\": %s, \"err\":\"%s\" }" (std.Replace(Environment.NewLine, "")) (err.Replace(Environment.NewLine, ""))
-        else
-            sprintf "%s,\n{\"std\": %s, \"err\":\"%s\" }" s (std.Replace(Environment.NewLine, "")) (err.Replace(Environment.NewLine, ""))) ""
-    |> sprintf "{ \"upload\" : [\n%s\n] }" 
+let postOfflineTweets () =
+    try
+        let feed = 
+            "samples/tweet-upload-2.json" 
+            |> File.ReadAllText
+            |> JObject.Parse
+        feed.Item("upload")
+        |> Seq.map (fun d ->   
+            let status    = sprintf "status=%s" (d.Item("status").ToString()) |> urlEncode
+            let media_ids = sprintf "media_ids=%s" (d.Item("media_ids").ToString())
+            sprintf """twurl /1.1/statuses/update.json -d "%s" -d "%s" """ status media_ids
+            |> Utils.execute) 
+        |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+        |> sprintf """{  "posted_at": "%s", "uploaded": [\n%s\n] }""" (DateTime.UtcNow.ToString())
+    with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
+
+
+let postTweetDb () =
+    try
+        "tweeted_at is null AND media_id is not null"
+        |> selectFromGab
+        |> Seq.map (fun p ->
+            try
+                let result =
+                    let data = sprintf "status=RT gab.ai %s&media_ids=%s" p.ActuserName p.MediaId
+                    let args = sprintf """/1.1/statuses/update.json -d "%s" """ data 
+                    printfn "%s" args
+                    args |> Utils.twurl
+                let e1 = (result |> JObject.Parse).Item("err").ToString() = ""
+                let e2 = (result |> JObject.Parse).Item("err").ToString().Contains("errors") |> not
+                if e1 && e2 then updatePost p updateCmdTweet
+                printfn "%s" result
+                Utils.wait 60. 0.2
+                result
+            with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message)
+        |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+        |> sprintf """{  "tweeted_at": "%s", "tweeted": [\n%s\n] }""" (DateTime.UtcNow.ToString())
+    with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message

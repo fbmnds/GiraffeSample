@@ -34,10 +34,9 @@ let processRepositories () =
     use client = new HttpClient()
     client.DefaultRequestHeaders.Accept.Clear()
     client.DefaultRequestHeaders.Accept.Add(MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"))
-    client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter")
+    client.DefaultRequestHeaders.Add("User-Agent", Globals.UserAgent)
     let stringTask = client.GetStringAsync(apiUrl).Result
-    //IO.File.WriteAllText("repos.json", stringTask)
-    stringTask, Json.DeserializeJson<RepositoryArray>(stringTask)
+    stringTask, Utils.DeserializeJson<RepositoryArray>(stringTask)
         
     
 let _,repositories = processRepositories()
@@ -50,7 +49,6 @@ let printRepos =
         Console.WriteLine(repo.Homepage)
         Console.WriteLine(repo.Watchers)
         Console.WriteLine(repo.JsonDate)
-    //    Console.WriteLine(repo.LastPush)
         Console.WriteLine()
         Console.ReadLine() |> ignore
 

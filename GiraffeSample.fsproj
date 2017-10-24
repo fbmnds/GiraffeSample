@@ -38,9 +38,9 @@
     <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Json.fs" />
+    <Compile Include="Globals.fs" />
+    <Compile Include="Utils.fs" />
     <Compile Include="Secrets.fs" />
-    <Compile Include="LunchTypes.fs" />
     <Compile Include="GabaiTypes.fs" /> 
     <Compile Include="DataAccess.fs" />
     <Compile Include="Models\*.fs" />   
