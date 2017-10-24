@@ -44,7 +44,7 @@ let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
 
 let handleTwitterImgUpload (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Twitter.uploadMedia "png") next ctx
+        return! text (Twitter.uploadMedia ()) next ctx
     }
 
 
@@ -61,20 +61,25 @@ let handleTwitterOfflinePost (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
+
+let handleTwitterPostDb (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Twitter.postTweetDb ()) next ctx
+    }
+
 // ---------------------------------
 // Gab.ai
 // ---------------------------------
 
 let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     task {
-        let std,err = Gabai.Thumbnail.execute name feed
-        return! text (sprintf "%s\n%s" std err) next ctx
+        return! text (Gabai.Thumbnail.generateThumbnail name feed) next ctx
     }
 
 
 let handleGabThumbnailDb (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Gabai.Thumbnail.executeThumbnailFromDb ()) next ctx
+        return! text (Gabai.Thumbnail.generateThumbnailFromDb ()) next ctx
     }
 
 
@@ -137,16 +142,23 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 // Web app
 // ---------------------------------
 
+/// https://kali:57878/gab/db/insert/feed/<gabname>
+/// https://kali:57878/gab/db/thumbnail
+/// https://kali:57878/tweets/img/upload
+/// https://kali:57878/tweets/db/post
+
+
 let webApp =
     choose [
         POST >=> route  "/tweets/post"               >=> handleTwitterPost
+        GET  >=> route  "/tweets/db/post"            >=> handleTwitterPostDb
         GET  >=> route  "/tweets/offline/post"       >=> handleTwitterOfflinePost
         GET  >=> routef "/tweets/feed/%s"            (fun name -> (handleTwitterFeed name))
         GET  >=> route  "/tweets/img/upload"         >=> handleTwitterImgUpload
 
         GET  >=> route  "/gab/login"                 >=> handleGabLogin
-        GET  >=> route  "/gab/thumbnail/db"          >=> handleGabThumbnailDb
-        GET  >=> routef "/gab/thumbnail/%s/%s"       (fun (name,post) -> (handleGabThumbnail name post))
+        GET  >=> route  "/gab/db/thumbnail"          >=> handleGabThumbnailDb
+        GET  >=> routef "/gab/file/thumbnail/%s/%s"  (fun (name,post) -> (handleGabThumbnail name post))
         GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
         GET  >=> routef "/gab/db/insert/feed/%s"     (fun name -> (handleInsertGabFeed name))
         GET  >=> routef "/gab/db/select/clause/%s"   (fun clause -> (handleGabSelectFor clause))

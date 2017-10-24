@@ -15,10 +15,12 @@ values ($ActuserName, $PostId, $PostBody, $PostCreatedAt)"
     let updateCmdThumbnail =  @"
 update gab set thumbnail_created_at=$TimeStamp
 where actuser_name=$ActuserName and post_id=$PostId"
+    let updateCmdMedia =  @"
+update gab set media_id=$MediaId
+where actuser_name=$ActuserName and post_id=$PostId"
     let updateCmdTweet =  @"
 update gab set tweeted_at=$TimeStamp
 where actuser_name=$ActuserName and post_id=$PostId"
-
 
     let addPost (post: PostRecord) =
         try
@@ -60,7 +62,7 @@ where actuser_name=$ActuserName and post_id=$PostId"
     // select * from gab where tweeted_at is null;
     // select * from gab where thumbnail_created_at is null;
     let selectFromGab clause =
-        let query = sprintf "select actuser_name,post_id from gab where %s" clause
+        let query = sprintf "select %s from gab where %s" GabaiTypes.PostRecordColumns clause
         try
             use conn = new SqliteConnection(connString)
             conn.Open()
@@ -85,3 +87,18 @@ where actuser_name=$ActuserName and post_id=$PostId"
             txn.Commit()            
         with _ as e -> printfn "connection '%s', update of '%A' failed:\n %s" connString post e.Message
 
+
+    let updateMedia (post: PostRecord) =
+        try
+            use conn = new SqliteConnection(connString)
+            conn.Open()
+            use txn: SqliteTransaction = conn.BeginTransaction()
+            let cmd = conn.CreateCommand()
+            cmd.Transaction <- txn
+            cmd.CommandText <- updateCmdMedia
+            cmd.Parameters.AddWithValue("$ActuserName",  post.ActuserName) |> ignore
+            cmd.Parameters.AddWithValue("$PostId",       post.PostId) |> ignore
+            cmd.Parameters.AddWithValue("$MediaId",      post.MediaId) |> ignore
+            cmd.ExecuteNonQuery() |> ignore
+            txn.Commit()            
+        with _ as e -> printfn "connection '%s', update of '%A' failed:\n %s" connString post e.Message
