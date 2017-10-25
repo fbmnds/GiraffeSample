@@ -7,6 +7,33 @@ open Microsoft.Data.Sqlite
 open GabaiTypes
 
 
+type Bool =
+| True = 1
+| False = 0
+
+module TwitterAccess =
+    let private connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "Sample.db")
+    let private insertLeaderCmd =  @"insert into twitter_leader (user_screen_name, active) values ($UserScreenName, $True)"
+
+    let addLeader (searchTweets: (string*string) list -> string) user_screen_name =
+        try
+            if (searchTweets [("screen_name","@"+user_screen_name)]) = """{ "tweets" : [] }""" then
+                sprintf """{  "error_msg": "no tweets found for %s, ignored" } """ user_screen_name
+            else
+                use conn = new SqliteConnection(connString)
+                conn.Open()        
+                use txn: SqliteTransaction = conn.BeginTransaction()
+                let cmd = conn.CreateCommand()
+                cmd.Transaction <- txn
+                cmd.CommandText <- insertLeaderCmd
+                cmd.Parameters.AddWithValue("$UserScreenName", user_screen_name) |> ignore
+                cmd.Parameters.AddWithValue("$True", Bool.True) |> ignore
+                cmd.ExecuteNonQuery() |> ignore
+                txn.Commit()
+                sprintf """{  "msg": "%s added to Twitter leader board" } """ user_screen_name
+        with _ as e -> sprintf """{  "error_msg": "connection '%s', insert of user '%s' failed:\n %s" }""" connString user_screen_name e.Message
+
+
 module GabaiAccess =
     let private connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "Sample.db")
     let private insertCmd =  @"
@@ -82,7 +109,7 @@ where actuser_name=$ActuserName and post_id=$PostId"
             cmd.CommandText <- updateCmd
             cmd.Parameters.AddWithValue("$ActuserName",  post.ActuserName) |> ignore
             cmd.Parameters.AddWithValue("$PostId",       post.PostId) |> ignore
-            cmd.Parameters.AddWithValue("$TimeStamp",    System.DateTime.Now.ToString()) |> ignore
+            cmd.Parameters.AddWithValue("$TimeStamp",    System.DateTime.UtcNow.ToString("u")) |> ignore
             cmd.ExecuteNonQuery() |> ignore
             txn.Commit()            
         with _ as e -> printfn "connection '%s', update of '%A' failed:\n %s" connString post e.Message

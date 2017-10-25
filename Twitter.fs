@@ -182,43 +182,76 @@ let postTweet (tweet: Post) =
 
 
 let verifyCredentials () =
-  let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
-  let signingString       = baseString "GET" verifyCredentialsURI queryParameters
-  let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
-  let oauth_signature     = hmacsha1 signingKey signingString
-  let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
-  System.Net.ServicePointManager.Expect100Continue <- false
-  let req = WebRequest.Create(verifyCredentialsURI)
-  //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
-  req.Headers.Add("Authorization",AuthorizationHeader)
-  req.Method      <- "GET"
-  req.ContentType <- "application/x-www-form-urlencoded"
-  use resp = req.GetResponse()
-  use strm = new StreamReader(resp.GetResponseStream())
-  strm.ReadToEnd()
-
-
-let searchTweets searchParams =
-    try
-      let currSearchURI       = searchParams |> Seq.map (fun (k,v) -> k+"="+v) |> String.concat "&" |> sprintf "%s?%s" searchURI
       let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
-      let signingString       = baseString "GET" searchURI (queryParameters @ searchParams)
+      let signingString       = baseString "GET" verifyCredentialsURI queryParameters
       let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
       let oauth_signature     = hmacsha1 signingKey signingString
       let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
       System.Net.ServicePointManager.Expect100Continue <- false
-      let req = WebRequest.Create(currSearchURI)
+      let req = WebRequest.Create(verifyCredentialsURI)
+      //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
       req.Headers.Add("Authorization",AuthorizationHeader)
       req.Method      <- "GET"
       req.ContentType <- "application/x-www-form-urlencoded"
       use resp = req.GetResponse()
       use strm = new StreamReader(resp.GetResponseStream())
       strm.ReadToEnd()
-      |> sprintf """{ "tweets" : %s }""" 
+
+
+// searchTweets [("screen_name","@fbmnds")];;
+let searchTweets searchParams = 
+    try
+        let currSearchURI       = searchParams |> Seq.map (fun (k,v) -> k+"="+v) |> String.concat "&" |> sprintf "%s?%s" searchURI
+        let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
+        let signingString       = baseString "GET" searchURI (queryParameters @ searchParams)
+        let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
+        let oauth_signature     = hmacsha1 signingKey signingString
+        let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
+        System.Net.ServicePointManager.Expect100Continue <- false
+        let req = WebRequest.Create(currSearchURI)
+        req.Headers.Add("Authorization",AuthorizationHeader)
+        req.Method      <- "GET"
+        req.ContentType <- "application/x-www-form-urlencoded"
+        use resp = req.GetResponse()
+        use strm = new StreamReader(resp.GetResponseStream())
+        strm.ReadToEnd()
+        |> sprintf """{ "tweets" : %s }""" 
     with _ -> """{ "tweets" : [] }"""
 
-  // searchTweets [("screen_name","@fbmnds")];;
 
+
+
+let getMinId (searchResult: string) : string option =
+    let getMinId_ (sR: string) = 
+        try 
+            let r = (sR |> JObject.Parse)
+            seq { for i in r.Item("tweets") do yield decimal (i.Item("id")) }
+            |> Seq.min
+            |> string
+            |> Some
+        with 
+        | _ -> None 
+    match searchResult with 
+    | """{ "tweets" : [] }""" -> None
+    | _ -> getMinId_ searchResult
+
+(*
+let getAllTweets (q: string) = 
+    let nextTweets q (min_id: string option) = 
+        match min_id with 
+        | Some min_id -> ([("screen_name",q); ("max_id",min_id)] |> searchTweets)
+        | _ -> """{ "tweets" : [] }"""
+    let rec getRestTweets q minId acc =
+        Utils.wait 3. 0.
+        let n = nextTweets q minId
+        printfn "minId = %A n = %A" minId n
+        match n, acc with 
+        | """{ "tweets" : [] }""", _ -> acc
+        | _, head :: tail when n.Value = head -> acc
+        | _, _ -> getRestTweets q (getMinId n) (n.Value :: acc)
+    let f = searchTweets [("screen_name",q)]
+    getRestTweets q (getMinId f) [f.Value]
+*)
 
 let twurlMedia actuser_name post_id =
     try
@@ -235,7 +268,7 @@ let twurlMedia actuser_name post_id =
             p.PostId      <- post_id
             p.MediaId     <- (d.Item("std").ToString() |> Utils.urlDecode |> JObject.Parse).Item("media_id").ToString()
             p |> DataAccess.GabaiAccess.updateMedia       
-            (System.DateTime.Now.ToString())
+            (DateTime.UtcNow.ToString("u"))
             |> sprintf """{ "actuser_name": "%s", "post_id": %s, "media_id": "%s", "uploaded_at": "%s" }""" p.ActuserName p.PostId p.MediaId
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message 
 
@@ -280,7 +313,7 @@ let postOfflineTweets () =
             sprintf """twurl /1.1/statuses/update.json -d "%s" -d "%s" """ status media_ids
             |> Utils.execute) 
         |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
-        |> sprintf """{  "posted_at": "%s", "uploaded": [\n%s\n] }""" (DateTime.UtcNow.ToString())
+        |> sprintf """{  "posted_at": "%s", "uploaded": [\n%s\n] }""" (DateTime.UtcNow.ToString("u"))
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
 
 
@@ -303,5 +336,6 @@ let postTweetDb () =
                 result
             with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message)
         |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
-        |> sprintf """{  "tweeted_at": "%s", "tweeted": [\n%s\n] }""" (DateTime.UtcNow.ToString())
+        |> sprintf """{  "tweeted_at": "%s", "tweeted": [\n%s\n] }""" (DateTime.UtcNow.ToString("u"))
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
+

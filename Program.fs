@@ -36,11 +36,14 @@ open DataAccess
 
 let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
-        let twitter = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))] |> JObject.Parse
-        let tweets = (twitter.Item("tweets")).First.ToString()
+        let tweets = Twitter.searchTweets [("screen_name", (sprintf "@%s" name))]
         return! text tweets next ctx
     }
 
+let handleTwitterLeaderAdd name (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (TwitterAccess.addLeader Twitter.searchTweets name) next ctx
+    }
 
 let handleTwitterImgUpload (next: HttpFunc) (ctx: HttpContext) =
     task {
@@ -154,7 +157,12 @@ let webApp =
         GET  >=> route  "/tweets/db/post"            >=> handleTwitterPostDb
         GET  >=> route  "/tweets/offline/post"       >=> handleTwitterOfflinePost
         GET  >=> routef "/tweets/feed/%s"            (fun name -> (handleTwitterFeed name))
+        GET  >=> routef "/tweets/leader/add/%s"      (fun name -> (handleTwitterLeaderAdd name))
+        
+        
         GET  >=> route  "/tweets/img/upload"         >=> handleTwitterImgUpload
+
+        
 
         GET  >=> route  "/gab/login"                 >=> handleGabLogin
         GET  >=> route  "/gab/db/thumbnail"          >=> handleGabThumbnailDb
