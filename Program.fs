@@ -19,11 +19,10 @@ open Giraffe.Middleware
 open Giraffe.Razor.Middleware
 open Giraffe.HttpContextExtensions
 
-open Newtonsoft.Json.Linq
 
-open Globals
 open Secrets
 open DataAccess
+open Globals
 
 
 
@@ -43,6 +42,18 @@ let handleTwitterFeed name (next: HttpFunc) (ctx: HttpContext) =
 let handleTwitterLeaderAdd name (next: HttpFunc) (ctx: HttpContext) =
     task {
         return! text (TwitterAccess.addLeader Twitter.searchTweets name) next ctx
+    }
+
+
+let handleTwitterLeaderFeedAdd name (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Twitter.insertRecentLeaderFeed TwitterFeedLimit name) next ctx
+    }
+
+
+let handleTwitterAllLeaderFeedsAdd (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Twitter.insertAllRecentLeaderFeeds ()) next ctx
     }
 
 let handleTwitterImgUpload (next: HttpFunc) (ctx: HttpContext) =
@@ -69,6 +80,13 @@ let handleTwitterPostDb (next: HttpFunc) (ctx: HttpContext) =
     task {
         return! text (Twitter.postTweetDb ()) next ctx
     }
+
+
+let handleTwitterAllLeaderFeedsPost (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text "Not implemented" next ctx
+    }
+
 
 // ---------------------------------
 // Gab.ai
@@ -152,28 +170,28 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 
 let webApp =
-    choose [
-        POST >=> route  "/tweets/post"               >=> handleTwitterPost
-        GET  >=> route  "/tweets/db/post"            >=> handleTwitterPostDb
-        GET  >=> route  "/tweets/offline/post"       >=> handleTwitterOfflinePost
-        GET  >=> routef "/tweets/feed/%s"            (fun name -> (handleTwitterFeed name))
-        GET  >=> routef "/tweets/leader/add/%s"      (fun name -> (handleTwitterLeaderAdd name))
+    choose [       
+        GET  >=> route  "/tweets/db/post"             >=> handleTwitterPostDb        
+        GET  >=> routef "/tweets/feed/%s"             (fun name -> (handleTwitterFeed name))
+        GET  >=> route  "/tweets/img/upload"          >=> handleTwitterImgUpload
+        GET  >=> routef "/tweets/leader/add/%s"       (fun name -> (handleTwitterLeaderAdd name))
+        GET  >=> routef "/tweets/leader/feed/add/%s"  (fun name -> (handleTwitterLeaderFeedAdd name))
+        GET  >=> route  "/tweets/leader/feeds/add"    >=> handleTwitterAllLeaderFeedsAdd
+        //GET  >=> route  "/tweets/leader/feeds/post"   >=> handleTwitterAllLeaderFeedsPost    
+        //GET  >=> routef "/tweets/leader/feed/post/%s" (fun name -> (handleTwitterLeaderFeedPost name))
+        GET  >=> route  "/tweets/offline/post"        >=> handleTwitterOfflinePost
+        POST >=> route  "/tweets/post"                >=> handleTwitterPost
         
-        
-        GET  >=> route  "/tweets/img/upload"         >=> handleTwitterImgUpload
+        GET  >=> routef "/gab/db/insert/feed/%s"      (fun name -> (handleInsertGabFeed name))
+        GET  >=> routef "/gab/db/select/clause/%s"    (fun clause -> (handleGabSelectFor clause))
+        GET  >=> route  "/gab/db/thumbnail"           >=> handleGabThumbnailDb
+        GET  >=> routef "/gab/feed/%s"                (fun name -> (handleGabFeed name))
+        GET  >=> routef "/gab/file/thumbnail/%s/%s"   (fun (name,post) -> (handleGabThumbnail name post))
+        GET  >=> route  "/gab/login"                  >=> handleGabLogin
+        GET  >=> routef "/gab/offline/tweet/feed/%s"  (fun name -> (handleGabOfflineTweetFeed name))
 
-        
-
-        GET  >=> route  "/gab/login"                 >=> handleGabLogin
-        GET  >=> route  "/gab/db/thumbnail"          >=> handleGabThumbnailDb
-        GET  >=> routef "/gab/file/thumbnail/%s/%s"  (fun (name,post) -> (handleGabThumbnail name post))
-        GET  >=> routef "/gab/feed/%s"               (fun name -> (handleGabFeed name))
-        GET  >=> routef "/gab/db/insert/feed/%s"     (fun name -> (handleInsertGabFeed name))
-        GET  >=> routef "/gab/db/select/clause/%s"   (fun clause -> (handleGabSelectFor clause))
-        GET  >=> routef "/gab/offline/tweet/feed/%s" (fun name -> (handleGabOfflineTweetFeed name))
-
-        GET  >=> route  "/github/repos"              >=> handleGithub
-        GET  >=> route  "/github/offline/repos"      >=> handleGithubOffline
+        GET  >=> route  "/github/repos"               >=> handleGithub
+        GET  >=> route  "/github/offline/repos"       >=> handleGithubOffline
 
         setStatusCode 404 >=> text "Not Found" 
     ]
@@ -219,7 +237,7 @@ let main argv =
         .UseKestrel(fun options -> 
             options.Listen(IPAddress.Any, 57878, (fun listenOptions -> listenOptions.UseHttps(pfxFile, secret.giraffeSamplePfx) |> ignore)))
         .UseIISIntegration()
-        .UseWebRoot(Globals.WebRoot)
+        .UseWebRoot(WebRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)

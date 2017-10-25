@@ -7,6 +7,8 @@
 module Globals 
 
 
+let TwitterFeedLimit = 20
+
 // ---------------------------------
 // Path settings
 // ---------------------------------

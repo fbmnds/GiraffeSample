@@ -4,7 +4,7 @@ open System.IO
 open NPoco
 open Microsoft.Data.Sqlite
 
-open GabaiTypes
+open DataAccess.Types
 
 
 type Bool =
@@ -13,7 +13,13 @@ type Bool =
 
 module TwitterAccess =
     let private connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "Sample.db")
-    let private insertLeaderCmd =  @"insert into twitter_leader (user_screen_name, active) values ($UserScreenName, $True)"
+    let private insertLeaderCmd = sprintf @"
+insert into twitter_leader (%s) values ($UserScreenName, $Active)" LeaderRecordColumns
+    let private insertLeaderFeedCmd = sprintf @"
+insert into twitter_leader_feeds (%s) 
+values ($UserScreenName, $TweetId, $Status, $TweetedAt, null)" FeedRecordColumns //"user_screen_name,tweet_id,status,tweeted_at,gabbed_at"
+    let private selectActiveLeadersCmd = "select user_screen_name from twitter_leader where active is 1"
+
 
     let addLeader (searchTweets: (string*string) list -> string) user_screen_name =
         try
@@ -27,11 +33,48 @@ module TwitterAccess =
                 cmd.Transaction <- txn
                 cmd.CommandText <- insertLeaderCmd
                 cmd.Parameters.AddWithValue("$UserScreenName", user_screen_name) |> ignore
-                cmd.Parameters.AddWithValue("$True", Bool.True) |> ignore
+                cmd.Parameters.AddWithValue("$Active",         Bool.True)        |> ignore
                 cmd.ExecuteNonQuery() |> ignore
                 txn.Commit()
                 sprintf """{  "msg": "%s added to Twitter leader board" } """ user_screen_name
-        with _ as e -> sprintf """{  "error_msg": "connection '%s', insert of user '%s' failed:\n %s" }""" connString user_screen_name e.Message
+        with _ as e -> sprintf """{  "error_msg": "connection '%s', insert of user '%s' failed:\n %s" }""" 
+                            connString user_screen_name e.Message
+
+
+    let addLeaderTweet user_screen_name tweet_id status tweeted_at =
+        try
+            use conn = new SqliteConnection(connString)
+            conn.Open()        
+            use txn: SqliteTransaction = conn.BeginTransaction()
+            let cmd = conn.CreateCommand()
+            cmd.Transaction <- txn
+            cmd.CommandText <- insertLeaderFeedCmd
+            cmd.Parameters.AddWithValue("$UserScreenName", user_screen_name) |> ignore
+            cmd.Parameters.AddWithValue("$TweetId",        tweet_id)         |> ignore
+            cmd.Parameters.AddWithValue("$Status",         status)           |> ignore
+            cmd.Parameters.AddWithValue("$TweetedAt",      tweeted_at)       |> ignore
+            cmd.ExecuteNonQuery() |> ignore
+            txn.Commit()
+            let result = sprintf """{  "msg": "%s,'%s' added to Twitter leader feed" } """ user_screen_name tweet_id
+            printfn "%s" result
+            result
+        with _ as e -> sprintf """{  "error_msg": "connection '%s', insert of user feed '%s','%s' failed:\n %s" }""" 
+                            connString user_screen_name tweet_id e.Message
+
+
+
+    let addLeaderFeed limit user_screen_name = 0
+
+
+    // select * from twitter where active is 1;
+    let selectActiveLeaders () = 
+        try
+            use conn = new SqliteConnection(connString)
+            conn.Open()
+            use db = new Database(conn)
+            db.Fetch<LeaderRecord>(selectActiveLeadersCmd) |> List.ofSeq
+        with _ as e -> printfn "connection '%s', active Twitter leaders select failed:\n %s" connString e.Message; [] //System.Collections.Generic.List<PostRecord>()   
+
 
 
 module GabaiAccess =
@@ -89,7 +132,7 @@ where actuser_name=$ActuserName and post_id=$PostId"
     // select * from gab where tweeted_at is null;
     // select * from gab where thumbnail_created_at is null;
     let selectFromGab clause =
-        let query = sprintf "select %s from gab where %s" GabaiTypes.PostRecordColumns clause
+        let query = sprintf "select %s from gab where %s" DataAccess.Types.PostRecordColumns clause
         try
             use conn = new SqliteConnection(connString)
             conn.Open()

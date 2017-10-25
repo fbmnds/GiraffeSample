@@ -3,12 +3,10 @@
 open System
 open System.Net
 open System.IO
-open System.IO.Compression
 
 open Newtonsoft.Json.Linq
 
 open Secrets
-open GabaiTypes
 open DataAccess
 
 
@@ -43,6 +41,7 @@ module Thumbnail =
  
 
 module Api =
+    open DataAccess.Types
     
     // ---------------------------------
     // Gab.ai API

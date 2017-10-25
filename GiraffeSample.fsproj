@@ -41,7 +41,7 @@
     <Compile Include="Globals.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Secrets.fs" />
-    <Compile Include="GabaiTypes.fs" /> 
+    <Compile Include="DataAccessTypes.fs" /> 
     <Compile Include="DataAccess.fs" />
     <Compile Include="Models\*.fs" />   
     <Compile Include="Gabai.fs" />

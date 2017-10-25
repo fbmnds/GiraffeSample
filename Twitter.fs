@@ -10,8 +10,8 @@ open Newtonsoft.Json.Linq
 
 open Secrets
 open Utils
-open GabaiTypes
 open DataAccess.GabaiAccess
+open DataAccess.Types
 
 
 // ---------------------------------
@@ -220,13 +220,12 @@ let searchTweets searchParams =
 
 
 
-
-let getMinId (searchResult: string) : string option =
+let private getMinMaxId max (searchResult: string) : string option =
     let getMinId_ (sR: string) = 
         try 
             let r = (sR |> JObject.Parse)
             seq { for i in r.Item("tweets") do yield decimal (i.Item("id")) }
-            |> Seq.min
+            |> if max then Seq.max else Seq.min
             |> string
             |> Some
         with 
@@ -234,6 +233,46 @@ let getMinId (searchResult: string) : string option =
     match searchResult with 
     | """{ "tweets" : [] }""" -> None
     | _ -> getMinId_ searchResult
+
+let getMaxId = getMinMaxId true
+let getMinId = getMinMaxId false
+
+
+let insertRecentLeaderFeed limit screen_name =
+    try
+        let tweets = 
+            searchTweets [("screen_name","@"+screen_name)] 
+            |> JObject.Parse
+            |> fun r -> seq { for i in r.Item("tweets") do yield i }
+
+        if tweets = Seq.empty<JToken> then
+            sprintf """{ "msg": "empty Twitter feed for %s" }""" screen_name
+        else
+            tweets
+            |> Seq.take (min limit (Seq.length tweets))
+            |> Seq.map (fun i -> 
+                let id = i.Item("id").ToString()
+                let screen_name' = i.Item("user").Item("screen_name").ToString()
+                let status = sprintf "%s\n\nhttps://twitter.com/%s/status/%s" (i.Item("text").ToString()) screen_name id
+                let created_at = i.Item("created_at").ToString()
+                DataAccess.TwitterAccess.addLeaderTweet screen_name id status created_at)
+            |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+            |> sprintf """{ "msg": [%s] }"""
+    with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message       
+
+    
+let insertAllRecentLeaderFeeds () =
+    try 
+        DataAccess.TwitterAccess.selectActiveLeaders ()
+        |> List.map (fun l -> 
+            Utils.wait 30. 0.3
+            printf "current leader %s for Twitter feed insertion" l.UserScreenName
+            l.UserScreenName 
+            |> insertRecentLeaderFeed Globals.TwitterFeedLimit)
+        |> List.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+            |> sprintf """{ "msg": [%s] }"""
+    with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
+
 
 (*
 let getAllTweets (q: string) = 
@@ -321,7 +360,9 @@ let postTweetDb () =
     try
         "tweeted_at is null AND media_id is not null"
         |> selectFromGab
-        |> Seq.map (fun p ->
+        |> Array.ofSeq
+        |> fun x -> Utils.shuffle x; x
+        |> Array.map (fun p ->
             try
                 let result =
                     let data = sprintf "status=RT gab.ai %s&media_ids=%s" p.ActuserName p.MediaId
@@ -335,7 +376,7 @@ let postTweetDb () =
                 Utils.wait 60. 0.2
                 result
             with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message)
-        |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+        |> Array.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
         |> sprintf """{  "tweeted_at": "%s", "tweeted": [\n%s\n] }""" (DateTime.UtcNow.ToString("u"))
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
 

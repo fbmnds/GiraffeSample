@@ -8,6 +8,15 @@ open System.Security.Cryptography
 
 let random = Random()
 
+let swap (a: _[]) x y =
+    let tmp = a.[x]
+    a.[x] <- a.[y]
+    a.[y] <- tmp
+
+// shuffle an array (in-place)
+let shuffle a =
+    Array.iteri (fun i _ -> swap a i (random.Next(i, Array.length a))) a
+
 let unreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
 let urlEncode str =
     String.init (String.length str) (fun i ->
