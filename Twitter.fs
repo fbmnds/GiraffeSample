@@ -307,7 +307,7 @@ let twurlMedia actuser_name post_id =
             p.PostId      <- post_id
             p.MediaId     <- (d.Item("std").ToString() |> Utils.urlDecode |> JObject.Parse).Item("media_id").ToString()
             p |> DataAccess.GabaiAccess.updateMedia       
-            (DateTime.UtcNow.ToString("u"))
+            (Utils.UtcNow ())
             |> sprintf """{ "actuser_name": "%s", "post_id": %s, "media_id": "%s", "uploaded_at": "%s" }""" p.ActuserName p.PostId p.MediaId
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message 
 
@@ -352,7 +352,7 @@ let postOfflineTweets () =
             sprintf """twurl /1.1/statuses/update.json -d "%s" -d "%s" """ status media_ids
             |> Utils.execute) 
         |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
-        |> sprintf """{  "posted_at": "%s", "uploaded": [\n%s\n] }""" (DateTime.UtcNow.ToString("u"))
+        |> sprintf """{  "posted_at": "%s", "uploaded": [\n%s\n] }""" (Utils.UtcNow ())
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
 
 
@@ -377,6 +377,6 @@ let postTweetDb () =
                 result
             with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message)
         |> Array.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
-        |> sprintf """{  "tweeted_at": "%s", "tweeted": [\n%s\n] }""" (DateTime.UtcNow.ToString("u"))
+        |> sprintf """{  "tweeted_at": "%s", "tweeted": [\n%s\n] }""" (Utils.UtcNow())
     with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
 

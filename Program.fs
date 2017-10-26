@@ -188,6 +188,8 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 /// https://kali:57878/tweets/img/upload
 /// https://kali:57878/tweets/db/post
 
+/// https://kali:57878/tweets/leader/feeds/add
+/// https://kali:57878/gab/twitter/leader/feeds/post
 
 let webApp =
     choose [       

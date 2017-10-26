@@ -94,6 +94,8 @@ let currentUnixTime() =
     |> int64
     |> sprintf "%d"
 
+let UtcNow () = System.DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:sszzz")
+
 
 // ---------------------------------
 // JSON utilities

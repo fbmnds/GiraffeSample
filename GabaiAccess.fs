@@ -82,7 +82,7 @@ where actuser_name=$ActuserName and post_id=$PostId"
             cmd.CommandText <- updateCmd
             cmd.Parameters.AddWithValue("$ActuserName",  post.ActuserName) |> ignore
             cmd.Parameters.AddWithValue("$PostId",       post.PostId) |> ignore
-            cmd.Parameters.AddWithValue("$TimeStamp",    System.DateTime.UtcNow.ToString("u")) |> ignore
+            cmd.Parameters.AddWithValue("$TimeStamp",    Utils.UtcNow()) |> ignore
             cmd.ExecuteNonQuery() |> ignore
             txn.Commit()            
         with _ as e -> printfn "connection '%s', update of '%A' failed:\n %s" connString post e.Message
