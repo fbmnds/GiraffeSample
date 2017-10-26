@@ -97,7 +97,7 @@ where user_screen_name=$UserScreenName and tweet_id=$TweetId"
             use txn: SqliteTransaction = conn.BeginTransaction()
             let cmd = conn.CreateCommand()
             cmd.Transaction <- txn
-            cmd.CommandText <- insertLeaderFeedCmd
+            cmd.CommandText <- updateFeedChunkRecordCmd
             cmd.Parameters.AddWithValue("$UserScreenName", feedRecord.UserScreenName) |> ignore
             cmd.Parameters.AddWithValue("$TweetId",        feedRecord.TweetId)        |> ignore
             cmd.Parameters.AddWithValue("$GabbedAt",       feedRecord.GabbedAt)       |> ignore
@@ -107,5 +107,5 @@ where user_screen_name=$UserScreenName and tweet_id=$TweetId"
                             feedRecord.UserScreenName feedRecord.TweetId
             printfn "%s" result
             result
-        with _ as e -> sprintf """{  "error_msg": "connection '%s', insert of user feed '%s','%s' failed:\n %s" }""" 
+        with _ as e -> sprintf """{  "error_msg": "connection '%s', update of user feed '%s','%s' failed:\n %s" }""" 
                             connString feedRecord.UserScreenName feedRecord.TweetId e.Message        

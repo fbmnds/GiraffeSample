@@ -253,7 +253,7 @@ let insertRecentLeaderFeed limit screen_name =
             |> Seq.map (fun i -> 
                 let id = i.Item("id").ToString()
                 let screen_name' = i.Item("user").Item("screen_name").ToString()
-                let status = sprintf "%s\n\nhttps://twitter.com/%s/status/%s" (i.Item("text").ToString()) screen_name id
+                let status = sprintf "RT Twitter @%s\n%s\n\nhttps://twitter.com/%s/status/%s" screen_name (i.Item("text").ToString()) screen_name id
                 let created_at = i.Item("created_at").ToString()
                 DataAccess.TwitterAccess.addLeaderTweet screen_name id status created_at)
             |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""

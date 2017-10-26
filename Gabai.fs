@@ -164,7 +164,7 @@ module Api =
 
     let postTweetOnGab (secret : Secret) (feedRecord : FeedRecord) = 
         let gabPost = GabPost()
-        gabPost.body <- sprintf "%s\n\nhttps://twitter.com/%s/status/%s" feedRecord.Status feedRecord.UserScreenName feedRecord.TweetId
+        gabPost.body <- feedRecord.Status
         let result = postGab secret gabPost
         if result.StartsWith ("""{ "error_msg":""") then 
             result
