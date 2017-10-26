@@ -23,6 +23,7 @@ open Giraffe.HttpContextExtensions
 open Secrets
 open DataAccess
 open Globals
+open DataAccess.Types
 
 
 
@@ -82,15 +83,28 @@ let handleTwitterPostDb (next: HttpFunc) (ctx: HttpContext) =
     }
 
 
-let handleTwitterAllLeaderFeedsPost (next: HttpFunc) (ctx: HttpContext) =
-    task {
-        return! text "Not implemented" next ctx
-    }
-
-
 // ---------------------------------
 // Gab.ai
 // ---------------------------------
+
+let handleGabPost body (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let post = GabPost ()
+        post.body <- body
+        return! text (Gabai.Api.postGab Secrets.secret post) next ctx
+    } 
+
+///https://twitter.com/OssiMarzahn76/status/923533897908015104
+let handleFeedGabPost body (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        let post = FeedRecord ()
+        post.Status <- "https://twitter.com/OssiMarzahn76/status/923533897908015104"
+        post.TweetId <- "923533897908015104"
+        post.UserScreenName <- "OssiMarzahn76"
+        
+        return! text (Gabai.Api.postTweetOnGab Secrets.secret post) next ctx
+    } 
+
 
 let handleGabThumbnail name feed (next: HttpFunc) (ctx: HttpContext) =
     task {
@@ -112,13 +126,13 @@ let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
 
 let handleGabFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Gabai.Api.getFeed name) next ctx
+        return! text (Gabai.Api.getFeed Secrets.secret name) next ctx
     }
 
 
 let handleInsertGabFeed name (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Gabai.Api.insertFeed name) next ctx
+        return! text (Gabai.Api.insertFeed Secrets.secret name) next ctx
     }
 
 
@@ -140,6 +154,12 @@ let handleGabSelectFor clause (next: HttpFunc) (ctx: HttpContext) =
                 |> GabaiAccess.selectFromGab
                 |> List.fold (fun s p -> sprintf "%s\n%s, %s" s p.ActuserName p.PostId) ""
         return! text result next ctx
+    }
+
+
+let handleGabTwitterLeaderFeedsPost (next: HttpFunc) (ctx: HttpContext) =
+    task {
+        return! text (Gabai.Api.postTwitterLeadersOnGab Secrets.secret) next ctx
     }
 
 
@@ -171,27 +191,29 @@ let handleGithubOffline (next: HttpFunc) (ctx: HttpContext) =
 
 let webApp =
     choose [       
-        GET  >=> route  "/tweets/db/post"             >=> handleTwitterPostDb        
-        GET  >=> routef "/tweets/feed/%s"             (fun name -> (handleTwitterFeed name))
-        GET  >=> route  "/tweets/img/upload"          >=> handleTwitterImgUpload
-        GET  >=> routef "/tweets/leader/add/%s"       (fun name -> (handleTwitterLeaderAdd name))
-        GET  >=> routef "/tweets/leader/feed/add/%s"  (fun name -> (handleTwitterLeaderFeedAdd name))
-        GET  >=> route  "/tweets/leader/feeds/add"    >=> handleTwitterAllLeaderFeedsAdd
-        //GET  >=> route  "/tweets/leader/feeds/post"   >=> handleTwitterAllLeaderFeedsPost    
-        //GET  >=> routef "/tweets/leader/feed/post/%s" (fun name -> (handleTwitterLeaderFeedPost name))
-        GET  >=> route  "/tweets/offline/post"        >=> handleTwitterOfflinePost
-        POST >=> route  "/tweets/post"                >=> handleTwitterPost
+        GET  >=> route  "/tweets/db/post"                >=> handleTwitterPostDb        
+        GET  >=> routef "/tweets/feed/%s"                (fun name -> (handleTwitterFeed name))
+        GET  >=> route  "/tweets/img/upload"             >=> handleTwitterImgUpload
+        GET  >=> routef "/tweets/leader/add/%s"          (fun name -> (handleTwitterLeaderAdd name))
+        GET  >=> routef "/tweets/leader/feed/add/%s"     (fun name -> (handleTwitterLeaderFeedAdd name))
+        GET  >=> route  "/tweets/leader/feeds/add"       >=> handleTwitterAllLeaderFeedsAdd
+        GET  >=> route  "/tweets/offline/post"           >=> handleTwitterOfflinePost
+        POST >=> route  "/tweets/post"                   >=> handleTwitterPost
         
-        GET  >=> routef "/gab/db/insert/feed/%s"      (fun name -> (handleInsertGabFeed name))
-        GET  >=> routef "/gab/db/select/clause/%s"    (fun clause -> (handleGabSelectFor clause))
-        GET  >=> route  "/gab/db/thumbnail"           >=> handleGabThumbnailDb
-        GET  >=> routef "/gab/feed/%s"                (fun name -> (handleGabFeed name))
-        GET  >=> routef "/gab/file/thumbnail/%s/%s"   (fun (name,post) -> (handleGabThumbnail name post))
-        GET  >=> route  "/gab/login"                  >=> handleGabLogin
-        GET  >=> routef "/gab/offline/tweet/feed/%s"  (fun name -> (handleGabOfflineTweetFeed name))
-
-        GET  >=> route  "/github/repos"               >=> handleGithub
-        GET  >=> route  "/github/offline/repos"       >=> handleGithubOffline
+        GET  >=> route  "/gab/login"                     >=> handleGabLogin
+        GET  >=> routef "/gab/post/%s"                   (fun body -> (handleGabPost body))
+        GET  >=> routef "/gab/db/insert/feed/%s"         (fun name -> (handleInsertGabFeed name))
+        GET  >=> routef "/gab/db/select/clause/%s"       (fun clause -> (handleGabSelectFor clause))
+        GET  >=> route  "/gab/db/thumbnail"              >=> handleGabThumbnailDb
+        GET  >=> routef "/gab/feed/%s"                   (fun name -> (handleGabFeed name))
+        GET  >=> routef "/gab/file/thumbnail/%s/%s"      (fun (name,post) -> (handleGabThumbnail name post))
+        
+        GET  >=> routef "/gab/offline/tweet/feed/%s"     (fun name -> (handleGabOfflineTweetFeed name))
+        GET  >=> route  "/gab/twitter/leader/feeds/post" >=> handleGabTwitterLeaderFeedsPost   
+        //GET  >=> routef "/tweets/feed/post/%s"           (fun name -> (handleGabTwitterFeedsPost name))
+        GET  >=> route  "/gab/test"                       >=> handleFeedGabPost "test"
+        GET  >=> route  "/github/repos"                  >=> handleGithub
+        GET  >=> route  "/github/offline/repos"          >=> handleGithubOffline
 
         setStatusCode 404 >=> text "Not Found" 
     ]

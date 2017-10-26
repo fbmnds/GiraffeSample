@@ -182,20 +182,20 @@ let postTweet (tweet: Post) =
 
 
 let verifyCredentials () =
-      let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
-      let signingString       = baseString "GET" verifyCredentialsURI queryParameters
-      let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
-      let oauth_signature     = hmacsha1 signingKey signingString
-      let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
-      System.Net.ServicePointManager.Expect100Continue <- false
-      let req = WebRequest.Create(verifyCredentialsURI)
-      //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
-      req.Headers.Add("Authorization",AuthorizationHeader)
-      req.Method      <- "GET"
-      req.ContentType <- "application/x-www-form-urlencoded"
-      use resp = req.GetResponse()
-      use strm = new StreamReader(resp.GetResponseStream())
-      strm.ReadToEnd()
+    let queryParameters     = oauthParameters secret.consumerKey secret.accessToken
+    let signingString       = baseString "GET" verifyCredentialsURI queryParameters
+    let signingKey          = compositeSigningKey secret.consumerSecret secret.accessTokenSecret
+    let oauth_signature     = hmacsha1 signingKey signingString
+    let AuthorizationHeader = ("oauth_signature",oauth_signature) :: queryParameters |> createAuthorizeHeader
+    System.Net.ServicePointManager.Expect100Continue <- false
+    let req = WebRequest.Create(verifyCredentialsURI)
+    //req.AddOAuthHeader(s.accessToken, s.accessTokenSecret, [])
+    req.Headers.Add("Authorization",AuthorizationHeader)
+    req.Method      <- "GET"
+    req.ContentType <- "application/x-www-form-urlencoded"
+    use resp = req.GetResponse()
+    use strm = new StreamReader(resp.GetResponseStream())
+    strm.ReadToEnd()
 
 
 // searchTweets [("screen_name","@fbmnds")];;

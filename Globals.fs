@@ -8,6 +8,7 @@ module Globals
 
 
 let TwitterFeedLimit = 20
+let TwitterFeedChunkSize = 3
 
 // ---------------------------------
 // Path settings
@@ -15,7 +16,7 @@ let TwitterFeedLimit = 20
 
 let ContentRoot = System.IO.Directory.GetCurrentDirectory()
 let WebRoot     = System.IO.Path.Combine(ContentRoot, "WebRoot")
-let Secrets     = System.Environment.GetEnvironmentVariable("SECRETS")
+let Vault       = System.Environment.GetEnvironmentVariable("SECRETS")
 let Home        = System.Environment.GetEnvironmentVariable("HOME")
 
 

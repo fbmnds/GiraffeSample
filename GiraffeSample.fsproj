@@ -41,8 +41,9 @@
     <Compile Include="Globals.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Secrets.fs" />
-    <Compile Include="DataAccessTypes.fs" /> 
-    <Compile Include="DataAccess.fs" />
+    <Compile Include="DataAccessTypes.fs" />
+    <Compile Include="TwitterAccess.fs" />
+    <Compile Include="GabaiAccess.fs" />
     <Compile Include="Models\*.fs" />   
     <Compile Include="Gabai.fs" />
     <Compile Include="Twitter.fs" />

@@ -7,8 +7,6 @@ open System.IO
 open Newtonsoft.Json.Linq
 
 open Secrets
-open DataAccess
-
 
 
 // ---------------------------------
@@ -17,6 +15,7 @@ open DataAccess
 
 
 module Thumbnail =
+    open DataAccess
     open DataAccess.GabaiAccess
 
     let generateThumbnail name post =
@@ -42,6 +41,9 @@ module Thumbnail =
 
 module Api =
     open DataAccess.Types
+    open DataAccess.GabaiAccess
+    open DataAccess.TwitterAccess
+    open System.Text
     
     // ---------------------------------
     // Gab.ai API
@@ -49,7 +51,8 @@ module Api =
 
     let loginUri = "https://gab.ai/auth/login"
     let feedUri name = sprintf "https://gab.ai/feed/%s" name
-
+    let postUri = "https://gab.ai/posts"
+    
     let rememberCookie = "remember_82e5d2c56bdd0811318f0cf078b78bfc"
     let pattern  = """<input type="hidden" name="_token" value="""
     let position = 5
@@ -73,7 +76,7 @@ module Api =
         |> fun t -> t.Trim([|' ';'<';'>';'"'|]).Split([|'"'|]).[position]
 
 
-    let getFeed user = 
+    let getFeed secret user = 
         try
             let req  = HttpWebRequest.Create((feedUri user), Method="GET")
             req.Headers.Clear()
@@ -93,11 +96,11 @@ module Api =
     /// feed / data / id                  -> post_id
     /// feed / data / post / body         -> post_body
     /// feed / data / post / created_at   -> post_created_at
-    let insertFeed user = 
+    let insertFeed secret user = 
         try
             let feed = 
                 user
-                |> getFeed
+                |> getFeed secret
                 |> JObject.Parse
             feed.Item("data")
             |> Seq.map (fun d -> 
@@ -107,7 +110,7 @@ module Api =
                 p.PostBody      <- d.Item("post").Item("body").ToString()
                 p.PostCreatedAt <- d.Item("post").Item("created_at").ToString()
                 p)
-            |> GabaiAccess.addPostSeq
+            |> addPostSeq
             sprintf """{ "user": "%s", "records": %d }""" user (feed.Item("data") |> Seq.length)
         with _ as e -> sprintf """{ "user": "%s", "error_msg": "%s" }""" user e.Message
 
@@ -126,8 +129,54 @@ module Api =
                 p.PostBody      <- d.Item("post").Item("body").ToString()
                 p.PostCreatedAt <- d.Item("post").Item("created_at").ToString()
                 p)
-            |> GabaiAccess.addPostSeq
+            |> addPostSeq
             "offline records written" 
         with _ as e -> e.Message
           
+
+    let postGab (secret : Secret) (post : GabPost) = 
+        try
+            let data = (post |> GabPostEncoded).ToCharArray() |> Array.map byte
+            let req = HttpWebRequest.Create(postUri) :?> HttpWebRequest
+            req.ProtocolVersion <- HttpVersion.Version11
+            req.Headers.Clear()
+            req.Timeout <- 1 * 60 * 1000
+            req.Method <- "POST"
+            req.UserAgent <- Globals.UserAgent
+            req.ContentType <- "application/json"
+            req.ContentLength <- int64 data.Length
+            req.Headers.Set("Authorization", 
+                            (sprintf "Bearer %s.%s.%s" 
+                                secret.gabJwtHeader secret.gabJwtPayload secret.gabJwtSignature))
+            req.Headers.Set("Connection", "close")
+            use wstream = req.GetRequestStream() 
+            wstream.Write(data,0, (data.Length))
+            wstream.Close()
+            use resp = req.GetResponse()
+            use strm = new StreamReader(resp.GetResponseStream())
+            strm.ReadToEnd()
+        with 
+        | :? WebException as e -> 
+            sprintf """{ "error_msg": {"headers":"%A", "message":"%s","status":"%A"} }""" 
+                e.Response.Headers e.Message e.Status; 
+        | _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
+
+
+    let postTweetOnGab (secret : Secret) (feedRecord : FeedRecord) = 
+        let gabPost = GabPost()
+        gabPost.body <- sprintf "%s\n\nhttps://twitter.com/%s/status/%s" feedRecord.Status feedRecord.UserScreenName feedRecord.TweetId
+        let result = postGab secret gabPost
+        if result.StartsWith ("""{ "error_msg":""") then 
+            result
+        else
+            updateUserChunkFeedRecord feedRecord
         
+
+    let postTwitterLeadersOnGab (secret : Secret)  = 
+        try
+            selectTweetsFeedChunk () 
+            |> Seq.map (postTweetOnGab secret)
+            |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) ""
+            |> sprintf """{ "msg": [%s] }"""
+        with _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
+
