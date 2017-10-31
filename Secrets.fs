@@ -35,8 +35,8 @@ let secret : Secret =
         accessTokenSecret = s.Item("accessTokenSecret").ToString()
         gabUsername       = s.Item("gabUsername").ToString()
         gabPassword       = s.Item("gabPassword").ToString()
-        gabJwtHeader      = s.Item("gabJwtHeader").ToString()
-        gabJwtPayload     = s.Item("gabJwtPayload").ToString()
-        gabJwtSignature   = s.Item("gabJwtSignature").ToString()
+        gabJwtHeader      = ""//TODO s.Item("gabJwtHeader").ToString()
+        gabJwtPayload     = ""//TODO s.Item("gabJwtPayload").ToString()
+        gabJwtSignature   = ""//TODO s.Item("gabJwtSignature").ToString()
         giraffeSamplePfx  = s.Item("giraffeSamplePfx").ToString()
     }

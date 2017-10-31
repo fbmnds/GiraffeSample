@@ -44,6 +44,8 @@ module Api =
     open DataAccess.GabaiAccess
     open DataAccess.TwitterAccess
     open System.Text
+    open Utils
+    open System.Net.Sockets
     
     // ---------------------------------
     // Gab.ai API
@@ -66,14 +68,28 @@ module Api =
         |> Seq.tail
         |> String.concat ""
 
-    let getToken () = 
-        let req  = WebRequest.Create(loginUri, Method="GET")
-        use resp = req.GetResponse()
-        use strm = new StreamReader(resp.GetResponseStream())
-        strm.ReadToEnd().Split(Environment.NewLine.ToCharArray())
-        |> Array.filter (fun s -> s.Contains(pattern))
-        |> String.concat ""
-        |> fun t -> t.Trim([|' ';'<';'>';'"'|]).Split([|'"'|]).[position]
+    let getToken (secret : Secret) =
+        let _token =
+            let req = WebRequest.Create(loginUri, Method="GET")
+            
+            use resp = req.GetResponse()
+            use strm = new StreamReader(resp.GetResponseStream())
+            strm.ReadToEnd().Split(Environment.NewLine.ToCharArray())
+            |> Array.filter (fun s -> s.Contains(pattern))
+            |> String.concat ""
+            |> fun t -> t.Trim([|' ';'<';'>';'"'|]).Split([|'"'|]).[position]
+
+        try
+            sprintf """php -f %s/phpGab.php username="%s" password="%s" """ 
+                Globals.ContentRoot (secret.gabUsername |> urlEncode) (secret.gabPassword |> urlEncode)
+            |> Utils.execute
+        with 
+        | :? WebException as e -> 
+            sprintf """{ "error_msg": {"headers":"%s", "message":"%s","status":"%A"} }""" 
+                (seq{ for h in e.Response.Headers do yield sprintf "%s" h} 
+                |> Seq.fold (fun s t -> if s = "" then t else sprintf "%s,\n%s" s t) "" 
+                |> sprintf """{ "msg": [%s] }""" ) e.Message e.Status; 
+        | _ as e -> sprintf """{ "error_msg": "%s" }""" e.Message
 
 
     let getFeed secret user = 

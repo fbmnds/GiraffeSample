@@ -120,7 +120,7 @@ let handleGabThumbnailDb (next: HttpFunc) (ctx: HttpContext) =
 
 let handleGabLogin (next: HttpFunc) (ctx: HttpContext) =
     task {
-        return! text (Gabai.Api.getToken ()) next ctx
+        return! text (Gabai.Api.getToken Secrets.secret) next ctx
     }
 
 
