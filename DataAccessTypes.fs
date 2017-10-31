@@ -6,6 +6,7 @@ module Types =
     | True = 1
     | False = 0
 
+
     type PostRecord () =
         member val ActuserName   = "" with get, set
         member val PostId        = "" with get, set

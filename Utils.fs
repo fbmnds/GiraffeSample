@@ -6,6 +6,8 @@ open System.Threading
 open System.Runtime.Serialization.Json
 open System.Security.Cryptography
 
+open Newtonsoft.Json.Linq
+
 let random = Random()
 
 let swap (a: _[]) x y =
@@ -62,6 +64,7 @@ let wait sec eps =
     sec * 1000. * (1. + random.NextDouble() * eps * (if random.Next() % 2 = 0 then 1. else -1.))
     |> int |> Thread.Sleep
 
+
 // ---------------------------------
 // Core algorithms
 // ---------------------------------
@@ -94,7 +97,23 @@ let currentUnixTime() =
     |> int64
     |> sprintf "%d"
 
+let fromUnixTimeSeconds seconds = System.DateTimeOffset.FromUnixTimeSeconds(seconds).Date.ToString("yyyy-MM-dd HH:mm:sszzz")
+
 let UtcNow () = System.DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:sszzz")
+
+
+// ---------------------------------
+// JWT token utilities
+// ---------------------------------
+
+let getExpiryDate jwtPayload = 
+    jwtPayload+"==" 
+    |> System.Convert.FromBase64String 
+    |> Array.map char 
+    |> Array.fold (fun s t -> if s = "" then (sprintf "%c" t) else sprintf "%s%c" s t) "" 
+    |> fun x -> (x |> JObject.Parse).Item("exp").ToString()
+    |> int64
+    |> fromUnixTimeSeconds
 
 
 // ---------------------------------
@@ -103,6 +122,9 @@ let UtcNow () = System.DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:sszzz")
 
 let toString = System.Text.Encoding.ASCII.GetString
 let toBytes (x : string) = System.Text.Encoding.ASCII.GetBytes x
+let byteToHex (x : byte []) = x |> Array.fold (sprintf "%s%02X") ""
+let SHA256 = SHA256Managed.Create()
+let hash256 (str : string) = str |> toBytes |> SHA256.ComputeHash |> byteToHex
 
 let SerializeJson<'a> (x : 'a) = 
     let jsonSerializer = DataContractJsonSerializer(typedefof<'a>)
